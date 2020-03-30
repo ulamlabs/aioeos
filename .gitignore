@@ -1,0 +1,27 @@
+# python
+__pycache__
+*.pyc
+*.pyd
+*.so
+*.o
+*.def
+*.egg-info
+.coverage
+.pytest_cache
+.env
+venv
+build
+dist
+
+# ides
+.vscode
+.favorites.json
+.idea
+*.swp
+
+# Mac
+.DS_Store
+
+# files
+*.log
+data-test

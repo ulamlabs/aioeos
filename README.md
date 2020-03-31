@@ -1,4 +1,7 @@
 # aioeos
+
+[![Documentation Status](https://readthedocs.org/projects/aioeos/badge/?version=latest)](http://aioeos.readthedocs.io/en/latest/?badge=latest)
+
 Async Python library for interacting with EOS.io blockchain. Library consists of an async wrapper for [Nodeos RPC API](https://developers.eos.io/eosio-nodeos/docs), a simple serializer for basic ABI types like transactions and actions and private key management. Helpers for generating actions such as creating new accounts, buying and selling RAM etc. can be imported from `aioeos.contracts` namespace.
 
 Please bear in mind that the serializer is not complete. Action payloads need

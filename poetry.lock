@@ -124,7 +124,7 @@ description = "ECDSA cryptographic signature library (pure python)"
 name = "ecdsa"
 optional = false
 python-versions = "*"
-version = "0.11"
+version = "0.13.3"
 
 [[package]]
 category = "dev"
@@ -537,7 +537,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "945c8d6e2193bbacd56782812c3570416eaa57a37175a58c696681200efc627b"
+content-hash = "42548c9c3893df563d437815fb1a81b3887d2f62e6c4309ac3aa996aba3dfd9f"
 python-versions = "^3.7"
 
 [metadata.files]
@@ -630,7 +630,8 @@ docutils = [
     {file = "docutils-0.16.tar.gz", hash = "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"},
 ]
 ecdsa = [
-    {file = "ecdsa-0.11.tar.gz", hash = "sha256:8e3b6c193f91dc94b2f3b0261e3eabbdc604f78ff99fdad324a56fdd0b5e958c"},
+    {file = "ecdsa-0.13.3-py2.py3-none-any.whl", hash = "sha256:9814e700890991abeceeb2242586024d4758c8fc18445b194a49bd62d85861db"},
+    {file = "ecdsa-0.13.3.tar.gz", hash = "sha256:163c80b064a763ea733870feb96f9dd9b92216cfcacd374837af18e4e8ec3d4d"},
 ]
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},

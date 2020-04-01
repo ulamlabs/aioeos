@@ -183,7 +183,7 @@ class EOSKey:
             ).digest()
 
             k = ecdsa.rfc6979.generate_k(
-                self._sk.curve.generator,
+                self._sk.curve.generator.order(),
                 self._sk.privkey.secret_multiplier,
                 hashlib.sha256,
                 sha_digest

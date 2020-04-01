@@ -3,7 +3,11 @@ from aioeos.types import EosAction
 
 
 def transfer(
-    from_addr: str, to_addr: str, quantity: str, memo: str = '', authorization=[]
+    from_addr: str,
+    to_addr: str,
+    quantity: str,
+    memo: str = '',
+    authorization=[]
 ) -> EosAction:
     return EosAction(
         account='eosio.token',

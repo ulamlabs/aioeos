@@ -27,8 +27,9 @@ class BasicTypeSerializer(BaseSerializer):
 
 
 class AbiNameSerializer(BasicTypeSerializer):
-    fmt = 'Q'
-    alphabet = '.12345abcdefghijklmnopqrstuvwxyz'
+    def __init__(self):
+        self.alphabet = '.12345abcdefghijklmnopqrstuvwxyz'
+        self.fmt = 'Q'
 
     def serialize(self, value):
         name = sum(
@@ -95,7 +96,8 @@ class AbiBytesSerializer(VarUIntSerializer):
 
 
 class AbiTimePointSerializer(BasicTypeSerializer):
-    fmt = 'Q'
+    def __init__(self):
+        self.fmt = 'Q'
 
     def serialize(self, value):
         return super().serialize(int(value.timestamp() * 1000))
@@ -106,7 +108,8 @@ class AbiTimePointSerializer(BasicTypeSerializer):
 
 
 class AbiTimePointSecSerializer(BasicTypeSerializer):
-    fmt = 'I'
+    def __init__(self):
+        self.fmt = 'I'
 
     def serialize(self, value):
         return super().serialize(int(value.timestamp()))

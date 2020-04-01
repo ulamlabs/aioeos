@@ -1,29 +1,29 @@
 from dataclasses import dataclass, field, fields
-from typing import List, NewType
+from typing import List
 
 
 # EOS ABI types
 # TODO: implement bool, uint128, int128, float128, block_timestamp_type,
 # symbol, symbol_code, asset, checksum160, checksum256, checksum512,
 # public_key, private_key, signature, extended_asset
-UInt8 = NewType('UInt8', int)
-UInt16 = NewType('UInt16', int)
-UInt32 = NewType('UInt32', int)
-UInt64 = NewType('UInt64', int)
-Int8 = NewType('Int8', int)
-Int16 = NewType('Int16', int)
-Int32 = NewType('Int32', int)
-Int64 = NewType('Int64', int)
-Float32 = NewType('Float32', float)
-Float64 = NewType('Float64', float)
-Name = NewType('Name', str)
-String = NewType('String', str)
-TimePointSec = NewType('TimePointSec', UInt32)
-TimePoint = NewType('TimePoint', UInt64)
-AbiBytes = NewType('AbiBytes', bytes)
+UInt8 = int
+UInt16 = int
+UInt32 = int
+UInt64 = int
+Int8 = int
+Int16 = int
+Int32 = int
+Int64 = int
+Float32 = float
+Float64 = float
+Name = str
+String = str
+TimePointSec = UInt32
+TimePoint = UInt64
+AbiBytes = bytes
 
 # this type is weird because it's like int, but it has no fixed size
-VarUInt = NewType('VarUInt', int)
+VarUInt = int
 
 
 @dataclass

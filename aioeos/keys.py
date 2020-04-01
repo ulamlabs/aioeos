@@ -6,15 +6,16 @@ import secrets
 
 
 class EOSKey:
-    def __init__(self, private_key=None, public_key=None):
-        """
-        Creates EOSKey instance.
+    """
+    EOSKey instance.
 
-        Depends on which kwargs are given, this works in a different way:
-        - No kwargs - generates a new private key
-        - Only private_key - public key is being derived from private key
-        - Only public_key - EOSKey instance has no private key
-        """
+    Depends on which kwargs are given, this works in a different way:
+    - No kwargs - generates a new private key
+    - Only private_key - public key is being derived from private key
+    - Only public_key - EOSKey instance has no private key
+    """
+
+    def __init__(self, private_key=None, public_key=None):
         if private_key:
             # Private Key can be either a SigningKey instance or string
             if isinstance(private_key, ecdsa.SigningKey):

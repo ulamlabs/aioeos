@@ -1,4 +1,4 @@
-"""Wrapper for creating actions on eosio contract"""
+"""Helpers for creating actions on eosio contract"""
 from aioeos.types import EosAction
 
 

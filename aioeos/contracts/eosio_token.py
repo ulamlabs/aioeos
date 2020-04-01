@@ -1,9 +1,9 @@
-"""Wrapper for creating actions on eosio.token contract"""
+"""Helpers for creating actions on eosio.token contract"""
 from aioeos.types import EosAction
 
 
 def transfer(
-    from_addr, to_addr, quantity, memo='', authorization=[]
+    from_addr: str, to_addr: str, quantity: str, memo: str = '', authorization=[]
 ) -> EosAction:
     return EosAction(
         account='eosio.token',

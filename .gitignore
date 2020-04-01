@@ -25,3 +25,4 @@ dist
 # files
 *.log
 data-test
+coverage.xml

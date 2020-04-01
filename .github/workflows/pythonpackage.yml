@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python_version: [3.7, 3.8]
+        python_version: [3.7]
 
     steps:
     - uses: actions/checkout@v2
@@ -33,4 +33,11 @@ jobs:
         poetry run flake8
     - name: Test with pytest
       run: |
-        poetry run pytest
+        poetry run pytest --cov --cov-report xml
+    - name: Uploading coverage
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.xml # optional
+        flags: unittests # optional
+        name: codecov-umbrella # optional
+        fail_ci_if_error: true # optional (default = false)

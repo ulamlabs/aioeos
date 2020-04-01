@@ -3,6 +3,12 @@ name = "aioeos"
 version = "1.0.0"
 description = "Async library for interacting with EOS.io blockchain"
 authors = ["Maciej Janiszewski <maciej@ulam.io>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://ulam.io/"
+repository = "https://github.com/ulamlabs/aioeos"
+documentation = "https://aioeos.readthedocs.io/en/latest/"
+keywords = ["blockchain", "eos", "async", "eosio", "cryptocurrency"]
 
 [tool.poetry.dependencies]
 python = "^3.7"

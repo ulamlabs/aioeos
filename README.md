@@ -1,6 +1,6 @@
 # aioeos
 
-[![Documentation Status](https://readthedocs.org/projects/aioeos/badge/?version=latest)](http://aioeos.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/ksiazkowicz/aioeos/branch/master/graph/badge.svg)](https://codecov.io/gh/ksiazkowicz/aioeos) ![Python package](https://github.com/ksiazkowicz/aioeos/workflows/Python%20package/badge.svg) ![Upload Python Package](https://github.com/ksiazkowicz/aioeos/workflows/Upload%20Python%20Package/badge.svg)
+[![Documentation Status](https://readthedocs.org/projects/aioeos/badge/?version=latest)](http://aioeos.readthedocs.io/en/latest/?badge=latest) [![codecov](https://codecov.io/gh/ulamlabs/aioeos/branch/master/graph/badge.svg)](https://codecov.io/gh/ulamlabs/aioeos) ![Python package](https://github.com/ulamlabs/aioeos/workflows/Python%20package/badge.svg) ![Upload Python Package](https://github.com/ulamlabs/aioeos/workflows/Upload%20Python%20Package/badge.svg)
 
 Async Python library for interacting with EOS.io blockchain. 
 

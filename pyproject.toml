@@ -13,7 +13,7 @@ keywords = ["blockchain", "eos", "async", "eosio", "cryptocurrency"]
 [tool.poetry.dependencies]
 python = "^3.7"
 aiohttp = "^3.3.1"
-base58 = "^1.0.3"
+base58 = "2.0.0"
 ecdsa = "0.13.3"
 
 [tool.poetry.dev-dependencies]
@@ -22,6 +22,10 @@ pytest = "^5.4.1"
 sphinx = "^2.4.4"
 sphinx_rtd_theme = "^0.4.3"
 pytest-cov = "^2.8.1"
+mypy = "^0.770"
+aioresponses = "^0.6.3"
+pytest-aiohttp = "^0.3.0"
+pytest-mock = "^3.0.0"
 
 [build-system]
 requires = ["poetry>=0.12"]

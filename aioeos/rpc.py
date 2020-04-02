@@ -1,5 +1,5 @@
 import base64
-from aiohttp.client import ClientSession
+from aiohttp import ClientSession
 from aioeos import exceptions
 
 
@@ -32,7 +32,7 @@ class EosJsonRpc:
                     raise ERROR_NAME_MAP.get(
                         error.get('name'),
                         exceptions.EosRpcException
-                    )(data=error)
+                    )(error)
                 return resp_dict
 
     async def abi_json_to_bin(self, code, action, args):

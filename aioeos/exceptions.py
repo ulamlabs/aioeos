@@ -18,10 +18,6 @@ class EosMissingTaposFieldsException(EosRpcException):
     """TAPOS fields are missing from Transaction object"""
 
 
-class EosSerializerUnsupportedTypeException(EosRpcException):
-    """Our serializer doesn't support provided object type, shouldn't happen"""
-
-
 class EosDeadlineException(EosRpcException):
     """Transaction timed out"""
 
@@ -43,3 +39,21 @@ class EosAssertMessageException(EosRpcException):
     Generic assertion error from smart contract, can mean literally anything,
     need to parse C++ traceback to figure out what went wrong.
     """
+
+
+class EosSerializerException(Exception):
+    """Base exception class for serializer errors"""
+
+
+class EosSerializerUnsupportedTypeException(EosSerializerException):
+    """Our serializer doesn't support provided object type"""
+
+
+class EosSerializerAbiNameTooLongException(EosSerializerException):
+    def __init__(self):
+        super().__init__('Value is too long, expected up to 13 characters')
+
+
+class EosSerializerAbiNameInvalidCharactersException(EosSerializerException):
+    def __init__(self):
+        super().__init__('Value contains invalid characters')

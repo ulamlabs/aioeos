@@ -12,6 +12,7 @@ __pycache__
 venv
 build
 dist
+.mypy_cache
 
 # ides
 .vscode

@@ -16,7 +16,7 @@ def test_eos_key_creating():
     assert not key2.verify(signature, example_string)
 
     # We should be able to convert the key to wif format and load it
-    key3 = EOSKey(key1.to_wif())
+    key3 = EOSKey(private_key=key1.to_wif())
     assert key3.verify(signature, example_string)
 
 
@@ -30,10 +30,10 @@ def test_eos_key_restore():
     pvt_public = 'EOS859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM'
 
     # should return the same values as the original ones
-    wif_key = EOSKey(wif_private)
+    wif_key = EOSKey(private_key=wif_private)
     assert wif_key.to_public() == wif_public
     assert wif_key.to_wif() == wif_private
 
-    pvt_key = EOSKey(pvt_private)
+    pvt_key = EOSKey(private_key=pvt_private)
     assert pvt_key.to_public() == pvt_public
     assert pvt_key.to_pvt() == pvt_private

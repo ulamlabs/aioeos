@@ -1,5 +1,5 @@
 """Helpers for creating actions on eosio.token contract"""
-from aioeos.types import EosAction
+from aioeos import types
 
 
 def transfer(
@@ -8,8 +8,8 @@ def transfer(
     quantity: str,
     memo: str = '',
     authorization=[]
-) -> EosAction:
-    return EosAction(
+) -> types.EosAction:
+    return types.EosAction(
         account='eosio.token',
         name='transfer',
         authorization=authorization,
@@ -22,8 +22,8 @@ def transfer(
     )
 
 
-def close(owner, symbol, authorization=[]) -> EosAction:
-    return EosAction(
+def close(owner, symbol, authorization=[]) -> types.EosAction:
+    return types.EosAction(
         account='eosio.token',
         name='close',
         authorization=authorization,

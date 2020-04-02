@@ -1,15 +1,47 @@
 from datetime import datetime, timezone
-from aioeos import serializer, types
+
+import pytest
+
+from aioeos import serializer, types, exceptions
+
+
+def test_unsupported_type_exception():
+    with pytest.raises(exceptions.EosSerializerUnsupportedTypeException):
+        serializer.get_abi_type_serializer(None)
 
 
 def test_abi_name_serializer():
+    s = serializer.AbiNameSerializer()
     name = 'eosio.token'
-    serialized = serializer.encode_eos_type(types.Name, name)
+    serialized = s.serialize(name)
     assert serialized == b'\x00\xa6\x824\x03\xea0U'
 
     # serializing and deserializing should produce the same value
-    length, deserialized = serializer.decode_eos_type(types.Name, serialized)
+    _, deserialized = s.deserialize(serialized)
     assert deserialized == name
+
+
+def test_abi_name_serializer_13th_char():
+    s = serializer.AbiNameSerializer()
+    name = 'eosio.testing'
+    serialized = s.serialize(name)
+    assert serialized == b'<]\xc6*\x03\xea0U'
+
+    # serializing and deserializing should produce the same value
+    _, deserialized = s.deserialize(serialized)
+    assert deserialized == name
+
+
+def test_abi_name_serializer_validation():
+    s = serializer.AbiNameSerializer()
+
+    with pytest.raises(exceptions.EosSerializerAbiNameTooLongException):
+        s.serialize('dfisdjfiosdjfiosdjfiodsfjo')
+
+    with pytest.raises(
+        exceptions.EosSerializerAbiNameInvalidCharactersException
+    ):
+        s.serialize('eosio;9852')
 
 
 def test_basic_type_serializer():
@@ -22,13 +54,18 @@ def test_basic_type_serializer():
         types.Int64: -2394823409
     }
     encoded = {
-        eos_type: serializer.encode_eos_type(eos_type, value)
-        for eos_type, value in examples.items()
+        abi_type: (
+            serializer.get_abi_type_serializer(abi_type).serialize(value)
+        )
+        for abi_type, value in examples.items()
     }
     decoded = {
-        eos_type: serializer.decode_eos_type(eos_type, value)[1]
-        for eos_type, value in encoded.items()
+        abi_type: (
+            serializer.get_abi_type_serializer(abi_type).deserialize(value)[1]
+        )
+        for abi_type, value in encoded.items()
     }
+
     # let's make an assumption, that if example values are not the same as
     # their encoded representation, we did the thing
     assert examples != encoded
@@ -36,48 +73,55 @@ def test_basic_type_serializer():
 
 
 def test_string_serializer():
+    s = serializer.AbiStringSerializer()
     value = 'Really random string for testing'
-    encoded = serializer.encode_eos_type(types.String, value)
-    length, decoded = serializer.decode_eos_type(types.String, encoded)
+    encoded = s.serialize(value)
+    _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
 
 
 def test_abi_bytes_serializer():
+    s = serializer.AbiBytesSerializer()
     value = b'\x00\x21\x37\x00'
-    encoded = serializer.encode_eos_type(types.AbiBytes, value)
-    length, decoded = serializer.decode_eos_type(types.AbiBytes, encoded)
+    encoded = s.serialize(value)
+    _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
 
 
 def test_time_point_sec_serializer():
+    s = serializer.AbiTimePointSecSerializer()
+
     # drop anything below seconds
     value = datetime.now(timezone.utc).replace(microsecond=0)
 
-    encoded = serializer.encode_eos_type(types.TimePointSec, value)
-    length, decoded = serializer.decode_eos_type(types.TimePointSec, encoded)
+    encoded = s.serialize(value)
+    _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
 
 
 def test_time_point_serializer():
-    # round datetime to precision supported by TimePoint type
+    s = serializer.AbiTimePointSerializer()
+
+    # round datetime to miliseconds
     value = datetime.now(timezone.utc)
     value = value.replace(
         microsecond=int(int(value.microsecond / 1000) * 1000)
     )
 
-    encoded = serializer.encode_eos_type(types.TimePoint, value)
-    length, decoded = serializer.decode_eos_type(types.TimePoint, encoded)
+    encoded = s.serialize(value)
+    _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
 
 
 def test_varuint_serializer():
+    s = serializer.VarUIntSerializer()
     value = 298409234
-    encoded = serializer.encode_eos_type(types.VarUInt, value)
-    length, decoded = serializer.decode_eos_type(types.VarUInt, encoded)
+    encoded = s.serialize(value)
+    _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
 

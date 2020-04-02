@@ -15,16 +15,13 @@ class EOSKey:
     - Only public_key - EOSKey instance has no private key
     """
 
-    def __init__(self, private_key=None, public_key=None):
+    def __init__(self, *, private_key: str = None, public_key: str = None):
+        assert not (private_key and public_key), 'Pass only 1 key'
         if private_key:
-            # Private Key can be either a SigningKey instance or string
-            if isinstance(private_key, ecdsa.SigningKey):
-                self._sk = private_key
-            else:
-                private_key = self._parse_key(private_key)
-                self._sk = ecdsa.SigningKey.from_string(
-                    private_key, curve=ecdsa.SECP256k1
-                )
+            private_key = self._parse_key(private_key)
+            self._sk = ecdsa.SigningKey.from_string(
+                private_key, curve=ecdsa.SECP256k1
+            )
         elif not public_key:
             entropy = ecdsa.util.PRNG(secrets.randbits(512))
             self._sk = ecdsa.SigningKey.generate(

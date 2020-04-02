@@ -1,0 +1,10 @@
+[run]
+source = aioeos
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if TYPE_CHECKING:
+
+[xml]
+output = coverage.xml

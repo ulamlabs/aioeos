@@ -3,4 +3,6 @@ base58==2.0.0
 ecdsa==0.13.3
 
 # docs requirements
-sphinx_autodoc_typehints
+sphinx==2.4.4
+sphinx_rtd_theme==0.4.3
+sphinx_autodoc_typehints==1.10.3

@@ -79,7 +79,7 @@ class EosExtension(BaseAbiObject):
 @dataclass
 class EosTransaction(BaseAbiObject):
     expiration: TimePointSec = field(default_factory=datetime.now)
-    ref_block_num: UInt16 = 0
+    ref_block_num: UInt16 = UInt16(0)
     ref_block_prefix: UInt32 = 0
     max_net_usage_words: VarUInt = 0
     max_cpu_usage_ms: UInt8 = 0

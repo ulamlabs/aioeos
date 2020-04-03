@@ -24,7 +24,7 @@ class BaseSerializer(ABC):
 
 class BasicTypeSerializer(BaseSerializer):
     """
-    Serializes basic types such as integers and floats using `struct` module
+    Serializes basic types such as integers and floats using ``struct`` module
 
     :params fmt: format string, please refer to documentation for `struct
                  module <https://docs.python.org/3/library/struct.html>`_
@@ -46,7 +46,7 @@ class BasicTypeSerializer(BaseSerializer):
 class AbiNameSerializer(BasicTypeSerializer):
     """
     Serializer for ABI names. ABI names can only contain these characters:
-    `.12345abcdefghijklmnopqrstuvwxyz`. Maximum length is 13 chars.
+    ``.12345abcdefghijklmnopqrstuvwxyz``. Maximum length is 13 chars.
     """
 
     def __init__(self):
@@ -234,7 +234,7 @@ TYPE_MAPPING = {
 class AbiListSerializer(BaseSerializer):
     """
     Serializer for ABI List type. In binary format, it basically looks like
-    this: `[count][item 1][item 2]...`
+    this: ``[count][item 1][item 2]...``
     """
 
     def __init__(self, list_type: Type):

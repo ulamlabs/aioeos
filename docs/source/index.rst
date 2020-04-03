@@ -11,6 +11,7 @@ Welcome to aioeos's documentation!
 
    introduction
    api
+   changelog
 
 
 

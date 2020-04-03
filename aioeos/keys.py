@@ -51,7 +51,7 @@ class EOSKey:
         """
         Takes a private key, returns a checksum.
 
-        `key_type` determines the kind of checksum:
+        ``key_type`` determines the kind of checksum:
         - sha256x2
         - K1 - rmd160 checksum
         - empty string - rmd160 checksum without suffix
@@ -68,7 +68,7 @@ class EOSKey:
 
     def _check_encode(self, key_buffer, key_type=''):
         """
-        Encodes the key to checksummed base58 format. `key_type` determines
+        Encodes the key to checksummed base58 format. ``key_type`` determines
         checksum type.
         """
         # base58.b58encode only takes bytes, not bytearray, make sure we have
@@ -86,7 +86,7 @@ class EOSKey:
     def _check_decode(self, key_string, key_type=''):
         """
         Decodes the key from checksummed base58 format, checks it against
-        expected checksum and returns the value. `key_type` determines
+        expected checksum and returns the value. ``key_type`` determines
         checksum type.
         """
         buffer = base58.b58decode(key_string)
@@ -165,7 +165,7 @@ class EOSKey:
     def sign(self, digest):
         """
         Signs sha256 hash with private key. Returns signature in format:
-        `SIG_K1_{digest}`
+        ``SIG_K1_{digest}``
         """
         cnt = 0
         if len(digest) != 32:

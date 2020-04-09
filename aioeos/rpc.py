@@ -1,9 +1,14 @@
 import base64
+import binascii
 from dataclasses import asdict
+import hashlib
 import inspect
-from typing import Dict, Union
+from typing import Dict, List, Union
+
 from aiohttp import ClientSession
-from aioeos import exceptions
+from aioeos import exceptions, serializer
+from aioeos.keys import EOSKey
+from aioeos.types import BaseAbiObject, EosTransaction
 
 
 ERROR_NAME_MAP = {
@@ -196,6 +201,34 @@ class EosJsonRpc:
                 'transaction': transaction,
                 'available_keys': available_keys
             }
+        )
+
+    async def sign_and_push_transaction(
+        self,
+        transaction: EosTransaction,
+        *,
+        context_free_bytes: bytes = bytes(32),
+        keys: List[EOSKey] = []
+    ):
+        for action in transaction.actions:
+            if not isinstance(action.data, bytes):
+                abi_bin = await self.abi_json_to_bin(
+                    action.account, action.name, action.data
+                )
+                action.data = binascii.unhexlify(abi_bin['binargs'])
+
+        chain_id = await self.get_chain_id()
+        serialized_transaction = serializer.serialize(transaction)
+
+        digest = hashlib.sha256(
+            b''.join((chain_id, serialized_transaction, context_free_bytes))
+        ).digest()
+
+        return await self.push_transaction(
+            signatures=[key.sign(digest) for key in keys],
+            serialized_transaction=(
+                binascii.hexlify(serialized_transaction).decode()
+            )
         )
 
     async def push_transaction(self, signatures, serialized_transaction):

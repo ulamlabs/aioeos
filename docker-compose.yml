@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  eosio:
+    image: ulamlabs/eos-testnet
+    container_name: eosio
+    ports:
+      - 8888:8888

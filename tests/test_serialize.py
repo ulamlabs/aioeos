@@ -127,18 +127,18 @@ def test_varuint_serializer():
 
 
 def test_eos_authorization_serializer():
-    value = types.EosAuthorization(actor='eosio', permission='active')
+    value = types.EosPermissionLevel(actor='eosio', permission='active')
     encoded = serializer.serialize(value)
     assert encoded == b'\x00\x00\x00\x00\x00\xea0U\x00\x00\x00\x00\xa8\xed22'
-    length, decoded = serializer.deserialize(encoded, types.EosAuthorization)
+    length, decoded = serializer.deserialize(encoded, types.EosPermissionLevel)
     assert decoded == value
     assert len(encoded) == length
 
 
 def test_eos_action_serializer():
     authorizations = [
-        types.EosAuthorization(actor='eosio', permission='active'),
-        types.EosAuthorization(actor='cryptobakery', permission='active')
+        types.EosPermissionLevel(actor='eosio', permission='active'),
+        types.EosPermissionLevel(actor='cryptobakery', permission='active')
     ]
     action = types.EosAction(
         account='eosio',
@@ -190,7 +190,7 @@ def test_eos_transaction_deserialize():
                 account='jinlianyule1',
                 name='create',
                 authorization=[
-                    types.EosAuthorization(
+                    types.EosPermissionLevel(
                         actor='jinlianyule1',
                         permission='active'
                     )
@@ -224,8 +224,8 @@ def test_eos_transaction_deserialize():
 
 def test_eos_transaction_serializer():
     authorizations = [
-        types.EosAuthorization(actor='eosio', permission='active'),
-        types.EosAuthorization(actor='cryptobakery', permission='active')
+        types.EosPermissionLevel(actor='eosio', permission='active'),
+        types.EosPermissionLevel(actor='cryptobakery', permission='active')
     ]
     action = types.EosAction(
         account='eosio',

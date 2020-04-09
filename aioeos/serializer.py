@@ -210,6 +210,20 @@ class AbiObjectSerializer(BaseSerializer):
         return cursor, self.abi_class(**values)
 
 
+class AbiActionPayloadSerializer(BaseSerializer):
+    def serialize(self, value: types.AbiActionPayload) -> bytes:
+        assert not isinstance(value, dict), 'Convert data to ABI format first'
+
+        if isinstance(value, bytes):
+            return AbiBytesSerializer().serialize(value)
+
+        return AbiObjectSerializer(type(value)).serialize(value)
+
+    def deserialize(self, value: bytes) -> Tuple[int, bytes]:
+        # TODO: figure out how to convert it back to BaseAbiObject or dict
+        return AbiBytesSerializer().deserialize(value)
+
+
 TYPE_MAPPING = {
     types.UInt8: BasicTypeSerializer('B'),
     types.UInt16: BasicTypeSerializer('H'),
@@ -224,7 +238,7 @@ TYPE_MAPPING = {
     types.Name: AbiNameSerializer(),
     types.VarUInt: VarUIntSerializer(),
     types.AbiBytes: AbiBytesSerializer(),
-    types.AbiActionPayload: AbiBytesSerializer(),  # type: ignore
+    types.AbiActionPayload: AbiActionPayloadSerializer(),  # type: ignore
     types.TimePoint: AbiTimePointSerializer(),
     types.TimePointSec: AbiTimePointSecSerializer(),
     str: AbiStringSerializer()

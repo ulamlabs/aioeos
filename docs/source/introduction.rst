@@ -110,33 +110,34 @@ account.
 
 ::
 
+    from aioeos.account import EOSAccount
     from aioeos.contracts import eosio_token
-    from aioeos.types import EosAuthorization, EosTransaction
+    from aioeos.types import EosTransaction
+
+    test_account = EOSAccount(
+        name='eostest12345',
+        private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
+    )
 
     action = eosio_token.transfer(
-        from_addr='eostest12345',
+        from_addr=test_account.name,
         to_addr='mysecondacc1',
         quantity='1.0000 EOS',
         authorization=[
-            EosAuthorization(actor='eostest12345', permission='active')
+            test_account.authorization('active')
         ]
     )
 
-Because aioeos doesn't currently support serialization of action payloads, for
-this transaction to be ready to be submitted to the blockchain, we need to ask
-our RPC node to convert it for us. Remember to always **USE ONLY NODES THAT YOU
-TRUST.**
+Let's also create an instance of `EosJsonRpc`. Remember to always **USE ONLY
+NODES THAT YOU TRUST.** Because aioeos doesn't currently support serialization
+of action payloads, for this transaction to be ready to be submitted to the
+blockchain, we need to ask our RPC node to convert it for us. 
 
 ::
 
-    import binascii
     from aioeos.rpc import EosJsonRpc
 
     rpc = EosJsonRpc(url='http://127.0.0.1:8888')
-    abi_bin = await rpc.abi_json_to_bin(
-        action.account, action.name, action.data
-    )
-    action.data = binascii.unhexlify(abi_bin['binargs'])
 
 
 Now, let's create a transaction containing this action. Each transaction needs
@@ -144,22 +145,16 @@ to contain TAPOS fields. These tell the EOS.io blockchain when the transaction
 is considered valid, such as the first block in which it can be included, as
 well as an expiration date. While we can provide those parameters manually if
 we want to, we can also use the RPC to find out the right block number and
-prefix. Let's assume that we want these transaction to be valid since current
-block, for 2 minutes after it was mined.
+prefix. Let's assume that we want these transaction to be valid for next 2
+minutes.
 
 ::
 
     from datetime import datetime, timedelta
-    import pytz
 
-    info = await rpc.get_info()
-    block = await rpc.get_block(info['head_block_num'])
-
-    expiration = datetime.fromisoformat(block['timestamp']).replace(tzinfo=pytz.UTC)
-    expiration += timedelta(seconds=120)
-
+    block = await rpc.get_head_block()
     transaction = EosTransaction(
-        expiration=expiration,
+        expiration=datetime.now() + timedelta(minutes=2)
         ref_block_num=block['block_num'] & 65535,
         ref_block_prefix=block['ref_block_prefix'],
         actions=[action]
@@ -169,48 +164,17 @@ Transaction is now ready to be submitted to the blockchain. It's time to
 serialize, sign and push it. An EOS transaction signature is a digest of the
 following data:
 
-- Chain ID,
+- Chain ID - identifies the blockchain that transaction is submitted against,
 - Transaction,
-- 32 context-free bytes 
+- 32 context-free bytes - these can be left empty in this case
 
-While we can hardcode the first one, let's use the data we already got from RPC.
-Context-free bytes can be left empty. 
-
-::
-
-    import hashlib
-    from aioeos.serializer import serialize
-
-    chain_id = info.get('chain_id')
-    serialized_transaction = serialize(transaction)
-    context_free_bytes = bytes(32)
-
-    digest = (
-        hashlib.sha256(
-            b''.join((
-                binascii.unhexlify(chain_id),
-                serialized_transaction,
-                context_free_bytes
-            ))
-        ).digest()
-    )
-
-For signing, we're going to use EOSKey class. You can initialize it with your
-private key, public key (if you want to simply verify a signature) or just
-leave it empty. By default, a new signing key will be generated.
+While we could do it manually, RPC client provides a helper method which does
+all of that for us.
 
 ::
 
-    from aioeos.keys import EOSKey
-
-    key = EOSKey(private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN')
-    signature = key.sign(digest)
-
-A signed and serialized transaction can be now submitted to the blockchain::
-
-    response = await rpc.push_transaction(
-        signatures=[signature],
-        serialized_transaction=binascii.hexlify(serialized_transaction).decode()
+    response = await rpc.sign_and_push_transaction(
+        transaction, keys=[test_account.key]
     )
 
 Example code
@@ -219,70 +183,37 @@ Example code
 Complete example code::
 
     import asyncio
-    import binascii
-    from datetime import datetime, timedelta
-    import hashlib
 
-    import pytz
-
-    from aioeos.serializer import serialize
+    from aioeos.account import EOSAccount
     from aioeos.contracts import eosio_token
-    from aioeos.keys import EOSKey
     from aioeos.rpc import EosJsonRpc
-    from aioeos.types import EosAuthorization, EosTransaction
+    from aioeos.types import EosTransaction
 
 
     async def example():
+        test_account = EOSAccount(
+            name='eostest12345',
+            private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
+        )
+
         action = eosio_token.transfer(
-            from_addr='eostest12345',
+            from_addr=test_account.name,
             to_addr='mysecondacc1',
             quantity='1.0000 EOS',
-            authorization=[
-                EosAuthorization(actor='eostest12345', permission='active')
-            ]
+            authorization=[test_account.authorization('active')]
         )
 
         rpc = EosJsonRpc(url='http://127.0.0.1:8888')
-        abi_bin = await rpc.abi_json_to_bin(
-            action.account, action.name, action.data
-        )
-        action.data = binascii.unhexlify(abi_bin['binargs'])
-
-        info = await rpc.get_info()
-        block = await rpc.get_block(info['head_block_num'])
-
-        expiration = datetime.fromisoformat(block['timestamp']).replace(tzinfo=pytz.UTC)
-        expiration += timedelta(seconds=120)
+        block = await rpc.get_head_block()
 
         transaction = EosTransaction(
-            expiration=expiration,
             ref_block_num=block['block_num'] & 65535,
             ref_block_prefix=block['ref_block_prefix'],
             actions=[action]
         )
 
-        chain_id = info.get('chain_id')
-        serialized_transaction = serialize(transaction)
-        context_free_bytes = bytes(32)
-
-        digest = (
-            hashlib.sha256(
-                b''.join((
-                    binascii.unhexlify(chain_id),
-                    serialized_transaction,
-                    context_free_bytes
-                ))
-            ).digest()
-        )
-
-        key = EOSKey(
-            private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
-        )
-        signature = key.sign(digest)
-
-        response = await rpc.push_transaction(
-            signatures=[signature],
-            serialized_transaction=binascii.hexlify(serialized_transaction).decode()
+        response = await rpc.sign_and_push_transaction(
+            transaction, keys=[test_account.key]
         )
         print(response)
 

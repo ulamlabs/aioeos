@@ -1,21 +1,38 @@
 """Helpers for creating actions on eosio contract"""
-from aioeos.types import EosAction
+from dataclasses import dataclass
+from typing import Optional
+
+from aioeos.types import (
+    BaseAbiObject, Name, EosAction, EosAuthority
+)
+
+
+@dataclass
+class NewAccountPayload(BaseAbiObject):
+    creator: Name
+    name: Name
+    owner: EosAuthority
+    active: EosAuthority
 
 
 def newaccount(
-    creator, account_name, owner_keys, active_keys=None, authorization=[]
+    creator,
+    account_name,
+    *,
+    owner: EosAuthority,
+    active: Optional[EosAuthority] = None,
+    authorization=[]
 ) -> EosAction:
-    active_keys = owner_keys if not active_keys else active_keys
     return EosAction(
         account='eosio',
         name='newaccount',
         authorization=authorization,
-        data={
-            'creator': creator,
-            'name': account_name,
-            'owner': owner_keys,
-            'active': active_keys
-        }
+        data=NewAccountPayload(
+            creator=creator,
+            name=account_name,
+            owner=owner,
+            active=active if active else owner
+        )
     )
 
 

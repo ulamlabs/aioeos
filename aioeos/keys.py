@@ -1,8 +1,11 @@
-import base58
-import ecdsa
 import re
 import hashlib
 import secrets
+
+import base58
+import ecdsa
+
+from aioeos.types import EosKeyWeight
 
 
 class EOSKey:
@@ -211,7 +214,7 @@ class EOSKey:
         i = self._recovery_pubkey_param(digest, sig) + 4 + 27
         return f'SIG_K1_{self._check_encode(bytes([i]) + sig, "K1")}'
 
-    def verify(self, encoded_sig, digest):
+    def verify(self, encoded_sig, digest) -> bool:
         """Verifies signature with private key"""
         _, key_type, signature = encoded_sig.split('_')
         try:
@@ -222,3 +225,10 @@ class EOSKey:
         except (ecdsa.keys.BadSignatureError, TypeError):
             return False
         return True
+
+    def to_key_weight(self, weight: int) -> EosKeyWeight:
+        return EosKeyWeight(key=self.to_public(), weight=weight)
+
+    def __eq__(self, other) -> bool:
+        assert isinstance(other, EOSKey), 'Can compare only to EOSKey instance'
+        return self.to_public() == other.to_public()

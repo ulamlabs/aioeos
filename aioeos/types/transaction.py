@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Union
 from .abi import (
     AbiBytes, BaseAbiObject, UInt8, UInt16, UInt32, VarUInt, Name, TimePointSec
 )
-from .authority import EOSAuthorization
+from .authority import EosPermissionLevel
 
 
 AbiActionPayload = Union[Dict[str, Any], AbiBytes, BaseAbiObject]
@@ -15,7 +15,7 @@ AbiActionPayload = Union[Dict[str, Any], AbiBytes, BaseAbiObject]
 class EosAction(BaseAbiObject):
     account: Name
     name: Name
-    authorization: List[EOSAuthorization]
+    authorization: List[EosPermissionLevel]
     data: AbiActionPayload
 
 

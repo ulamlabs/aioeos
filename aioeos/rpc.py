@@ -1,4 +1,7 @@
 import base64
+from dataclasses import asdict
+import inspect
+from typing import Dict, Union
 from aiohttp import ClientSession
 from aioeos import exceptions
 
@@ -14,9 +17,22 @@ ERROR_NAME_MAP = {
 }
 
 
+def mixed_to_dict(payload: Union[Dict, BaseAbiObject]) -> Dict:
+    """
+    Recursively converts payload with mixed BaseAbiObjects and dicts to dict
+    """
+    is_class = inspect.isclass(type(payload))
+    if isinstance(payload, dict):
+        return {k: mixed_to_dict(v) for k, v in payload.items()}
+    if is_class and issubclass(type(payload), BaseAbiObject):
+        return asdict(payload)
+    return payload
+
+
 class EosJsonRpc:
     def __init__(self, url):
         self.URL = url
+        self._chain_id = None
 
     async def post(self, endpoint, json={}):
         async with ClientSession() as session:
@@ -40,7 +56,7 @@ class EosJsonRpc:
             '/chain/abi_json_to_bin', {
                 'code': code,
                 'action': action,
-                'args': args
+                'args': mixed_to_dict(args)
             }
         )
 
@@ -98,6 +114,16 @@ class EosJsonRpc:
 
     async def get_info(self):
         return await self.post('/chain/get_info')
+
+    async def get_chain_id(self):
+        if not self._chain_id:
+            info = await self.get_info()
+            self._chain_id = binascii.unhexlify(info['chain_id'])
+        return self._chain_id
+
+    async def get_head_block(self):
+        info = await self.get_info()
+        return await self.get_block(info['head_block_num'])
 
     async def get_producer_schedule(self):
         return await self.post('/chain/get_producer_schedule')

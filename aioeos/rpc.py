@@ -22,7 +22,7 @@ ERROR_NAME_MAP = {
 }
 
 
-def mixed_to_dict(payload: Union[Dict, BaseAbiObject]) -> Dict:
+def mixed_to_dict(payload: Union[Dict, BaseAbiObject]):
     """
     Recursively converts payload with mixed BaseAbiObjects and dicts to dict
     """

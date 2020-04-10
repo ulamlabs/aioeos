@@ -1,11 +1,11 @@
-from aioeos.keys import EOSKey
+from aioeos import EosKey
 
 
 def test_eos_key_creating():
     """Checks if we can generate a key and sign something with it"""
     # Both keys should be different
-    key1 = EOSKey()
-    key2 = EOSKey()
+    key1 = EosKey()
+    key2 = EosKey()
 
     # sign an example string with key 1
     example_string = 'Lorem ipsum dolor sit amet amet.'.encode('utf-8')
@@ -16,7 +16,7 @@ def test_eos_key_creating():
     assert not key2.verify(signature, example_string)
 
     # We should be able to convert the key to wif format and load it
-    key3 = EOSKey(private_key=key1.to_wif())
+    key3 = EosKey(private_key=key1.to_wif())
     assert key3.verify(signature, example_string)
 
 
@@ -30,10 +30,10 @@ def test_eos_key_restore():
     pvt_public = 'EOS859gxfnXyUriMgUeThh1fWv3oqcpLFyHa3TfFYC4PK2HqhToVM'
 
     # should return the same values as the original ones
-    wif_key = EOSKey(private_key=wif_private)
+    wif_key = EosKey(private_key=wif_private)
     assert wif_key.to_public() == wif_public
     assert wif_key.to_wif() == wif_private
 
-    pvt_key = EOSKey(private_key=pvt_private)
+    pvt_key = EosKey(private_key=pvt_private)
     assert pvt_key.to_public() == pvt_public
     assert pvt_key.to_pvt() == pvt_private

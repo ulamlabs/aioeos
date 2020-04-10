@@ -1,10 +1,10 @@
 from typing import Optional
 
-from aioeos.keys import EOSKey
+from aioeos.keys import EosKey
 from aioeos.types import EosPermissionLevel, EosPermissionLevelWeight
 
 
-class EOSAccount:
+class EosAccount:
     """
     Describes account on EOS blockchain. Contrary to other blockchains such as
     Bitcoin or Ethereum, public key is not an address. An account can have
@@ -17,12 +17,12 @@ class EOSAccount:
 
     :param name: name of the account,
 
-    Please provide key in one of the formats - EOSKey instance, private key in
-    WIF format and public key. Only one of these is accepted. If no key is
-    provided, a new one will be generated.
+    Please provide key in one of the formats - EosKey instance, private key in
+    WIF or PVT format and public key. Only one of these is accepted. If no key
+    is provided, a new one will be generated.
 
-    ;param key: EOSKey instance,
-    :param private_key: private key in wif format,
+    ;param key: EosKey instance,
+    :param private_key: private key in WIF or PVT format,
     :param public_key: public key
     """
 
@@ -30,7 +30,7 @@ class EOSAccount:
         self,
         name: str,
         *,
-        key: Optional[EOSKey] = None,
+        key: Optional[EosKey] = None,
         private_key: str = '',
         public_key: str = '',
     ):
@@ -47,7 +47,7 @@ class EOSAccount:
 
         self.name = name
         self.key = (
-            key or EOSKey(public_key=public_key, private_key=private_key)
+            key or EosKey(public_key=public_key, private_key=private_key)
         )
 
     def authorization(self, permission: str) -> EosPermissionLevel:

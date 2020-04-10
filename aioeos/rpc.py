@@ -6,7 +6,7 @@ from typing import Any, List
 
 from aiohttp import ClientSession
 from aioeos import exceptions, serializer
-from aioeos.keys import EOSKey
+from aioeos.keys import EosKey
 from aioeos.types import EosTransaction, is_abi_object
 
 
@@ -206,7 +206,7 @@ class EosJsonRpc:
         transaction: EosTransaction,
         *,
         context_free_bytes: bytes = bytes(32),
-        keys: List[EOSKey] = []
+        keys: List[EosKey] = []
     ):
         for action in transaction.actions:
             if isinstance(action.data, dict):

@@ -143,17 +143,10 @@ class EosKey:
             if p.to_string() == self._vk.to_string():
                 return i
 
-    def _compress_pubkey(self):
-        order = self._vk.curve.generator.order()
-        point = self._vk.pubkey.point
-        return (
-            bytes([2 + (point.y() & 1)])
-            + ecdsa.util.number_to_string(point.x(), order)
-        )
-
     def to_public(self):
         """Returns compressed, base58 encoded public key prefixed with EOS"""
-        return f'EOS{self._check_encode(self._compress_pubkey())}'
+        compressed = self._vk.to_string(encoding='compressed')
+        return f'EOS{self._check_encode(compressed)}'
 
     def to_wif(self):
         """Converts private key to legacy WIF format"""

@@ -1,4 +1,4 @@
-from aioeos.types import EosAction
+from aioeos.types import EosAction, EosAuthority
 from aioeos.contracts import eosio, eosio_token
 
 
@@ -36,19 +36,23 @@ def test_eosio_token_close():
     )
 
 
-def test_eosio_newaccount():
+def test_eosio_newaccount(main_account):
+    authority = EosAuthority(
+        threshold=1,
+        keys=[main_account.key.to_key_weight(1)]
+    )
     assert (
         eosio.newaccount(
-            'eosio', 'eosio2', ['keys']
+            main_account.name, 'eosio2', owner=authority
         ) == EosAction(
             account='eosio',
             name='newaccount',
             authorization=[],
             data={
-                'creator': 'eosio',
+                'creator': main_account.name,
                 'name': 'eosio2',
-                'owner': ['keys'],
-                'active': ['keys']
+                'owner': authority,
+                'active': authority
             }
         )
     )

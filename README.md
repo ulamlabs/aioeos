@@ -22,3 +22,11 @@ $ pip install aioeos
 ## Documentation
 
 Docs and usage examples are available [here](https://aioeos.readthedocs.io/en/latest).
+
+## Unit testing
+
+To run unit tests, you need to bootstrap an EOS testnet node first. Use the provided `ensure_eosio.sh` script.
+
+```
+$ ./ensure_eosio.sh
+```

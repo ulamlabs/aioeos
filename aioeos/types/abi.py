@@ -1,6 +1,7 @@
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from datetime import datetime
-from typing import Any, ClassVar, Dict, List, NewType, TYPE_CHECKING, Union
+import inspect
+from typing import Any, ClassVar, Dict, NewType, TYPE_CHECKING
 
 
 # EOS ABI types
@@ -44,8 +45,6 @@ else:
     # this type is weird because it's like int, but it has no fixed size
     VarUInt = NewType('VarUInt', int)
 
-AbiActionPayload = Union[Dict[str, Any], AbiBytes]
-
 
 @dataclass
 class BaseAbiObject:
@@ -56,34 +55,7 @@ class BaseAbiObject:
         return (x.name for x in fields(cls))
 
 
-@dataclass
-class EosAuthorization(BaseAbiObject):
-    actor: Name
-    permission: Name
-
-
-@dataclass
-class EosAction(BaseAbiObject):
-    account: Name
-    name: Name
-    authorization: List[EosAuthorization]
-    data: AbiActionPayload
-
-
-@dataclass
-class EosExtension(BaseAbiObject):
-    extension_type: UInt16
-    data: AbiBytes
-
-
-@dataclass
-class EosTransaction(BaseAbiObject):
-    expiration: TimePointSec = field(default_factory=datetime.now)
-    ref_block_num: UInt16 = UInt16(0)
-    ref_block_prefix: UInt32 = 0
-    max_net_usage_words: VarUInt = 0
-    max_cpu_usage_ms: UInt8 = 0
-    delay_sec: VarUInt = 0
-    context_free_actions: List[EosAction] = field(default_factory=list)
-    actions: List[EosAction] = field(default_factory=list)
-    transaction_extensions: List[EosExtension] = field(default_factory=list)
+def is_abi_object(obj: Any) -> bool:
+    """Object is an ABI object if it's a subclass of BaseAbiObject"""
+    is_class = inspect.isclass(obj)
+    return is_class and issubclass(obj, BaseAbiObject)

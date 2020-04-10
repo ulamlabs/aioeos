@@ -1,11 +1,17 @@
 """Helpers for creating actions on eosio contract"""
-from aioeos.types import EosAction
+from typing import Optional
+
+from aioeos.types import EosAction, EosAuthority
 
 
 def newaccount(
-    creator, account_name, owner_keys, active_keys=None, authorization=[]
+    creator,
+    account_name,
+    *,
+    owner: EosAuthority,
+    active: Optional[EosAuthority] = None,
+    authorization=[]
 ) -> EosAction:
-    active_keys = owner_keys if not active_keys else active_keys
     return EosAction(
         account='eosio',
         name='newaccount',
@@ -13,8 +19,8 @@ def newaccount(
         data={
             'creator': creator,
             'name': account_name,
-            'owner': owner_keys,
-            'active': active_keys
+            'owner': owner,
+            'active': active if active else owner
         }
     )
 

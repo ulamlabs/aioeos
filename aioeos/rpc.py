@@ -1,6 +1,13 @@
 import base64
+import binascii
+from dataclasses import asdict
+import hashlib
+from typing import Any, List
+
 from aiohttp import ClientSession
-from aioeos import exceptions
+from aioeos import exceptions, serializer
+from aioeos.keys import EOSKey
+from aioeos.types import EosTransaction, is_abi_object
 
 
 ERROR_NAME_MAP = {
@@ -14,9 +21,21 @@ ERROR_NAME_MAP = {
 }
 
 
+def mixed_to_dict(payload: Any):
+    """
+    Recursively converts payload with mixed ABI objects and dicts to dict
+    """
+    if isinstance(payload, dict):
+        return {k: mixed_to_dict(v) for k, v in payload.items()}
+    if is_abi_object(type(payload)):
+        return asdict(payload)
+    return payload
+
+
 class EosJsonRpc:
     def __init__(self, url):
         self.URL = url
+        self._chain_id = None
 
     async def post(self, endpoint, json={}):
         async with ClientSession() as session:
@@ -40,7 +59,7 @@ class EosJsonRpc:
             '/chain/abi_json_to_bin', {
                 'code': code,
                 'action': action,
-                'args': args
+                'args': mixed_to_dict(args)
             }
         )
 
@@ -98,6 +117,16 @@ class EosJsonRpc:
 
     async def get_info(self):
         return await self.post('/chain/get_info')
+
+    async def get_chain_id(self):
+        if not self._chain_id:
+            info = await self.get_info()
+            self._chain_id = binascii.unhexlify(info['chain_id'])
+        return self._chain_id
+
+    async def get_head_block(self):
+        info = await self.get_info()
+        return await self.get_block(info['head_block_num'])
 
     async def get_producer_schedule(self):
         return await self.post('/chain/get_producer_schedule')
@@ -170,6 +199,34 @@ class EosJsonRpc:
                 'transaction': transaction,
                 'available_keys': available_keys
             }
+        )
+
+    async def sign_and_push_transaction(
+        self,
+        transaction: EosTransaction,
+        *,
+        context_free_bytes: bytes = bytes(32),
+        keys: List[EOSKey] = []
+    ):
+        for action in transaction.actions:
+            if isinstance(action.data, dict):
+                abi_bin = await self.abi_json_to_bin(
+                    action.account, action.name, action.data
+                )
+                action.data = binascii.unhexlify(abi_bin['binargs'])
+
+        chain_id = await self.get_chain_id()
+        serialized_transaction = serializer.serialize(transaction)
+
+        digest = hashlib.sha256(
+            b''.join((chain_id, serialized_transaction, context_free_bytes))
+        ).digest()
+
+        return await self.push_transaction(
+            signatures=[key.sign(digest) for key in keys],
+            serialized_transaction=(
+                binascii.hexlify(serialized_transaction).decode()
+            )
         )
 
     async def push_transaction(self, signatures, serialized_transaction):

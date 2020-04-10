@@ -35,11 +35,15 @@ jobs:
       run: |
         poetry run mypy aioeos
     - name: Test with pytest
+      env:
+        # eosio node won't bootstrap on Github Actions
+        DISABLE_RPC_TESTS: 1
       run: |
         poetry run pytest --cov --cov-report xml
     - name: Uploading coverage
       uses: codecov/codecov-action@v1
       with:
+        token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         file: ./coverage.xml # optional
         flags: unittests # optional
         name: codecov-umbrella # optional

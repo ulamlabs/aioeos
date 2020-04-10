@@ -110,11 +110,10 @@ account.
 
 ::
 
-    from aioeos.account import EOSAccount
+    from aioeos import EosAccount, EosTransaction
     from aioeos.contracts import eosio_token
-    from aioeos.types import EosTransaction
 
-    test_account = EOSAccount(
+    test_account = EosAccount(
         name='eostest12345',
         private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
     )
@@ -135,7 +134,7 @@ blockchain, we need to ask our RPC node to convert it for us.
 
 ::
 
-    from aioeos.rpc import EosJsonRpc
+    from aioeos import EosJsonRpc
 
     rpc = EosJsonRpc(url='http://127.0.0.1:8888')
 
@@ -184,14 +183,11 @@ Complete example code::
 
     import asyncio
 
-    from aioeos.account import EOSAccount
+    from aioeos import EosAccount, EosJsonRpc, EosTransaction
     from aioeos.contracts import eosio_token
-    from aioeos.rpc import EosJsonRpc
-    from aioeos.types import EosTransaction
-
 
     async def example():
-        test_account = EOSAccount(
+        test_account = EosAccount(
             name='eostest12345',
             private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
         )

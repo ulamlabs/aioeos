@@ -1,4 +1,5 @@
-from aioeos.types import EosAction, EosAuthority
+from aioeos import EosAction
+from aioeos.types import EosAuthority
 from aioeos.contracts import eosio, eosio_token
 
 

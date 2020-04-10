@@ -2,8 +2,8 @@ import os
 
 import pytest
 
+from aioeos import EosTransaction
 from aioeos.contracts import eosio_token
-from aioeos.types import EosTransaction
 
 
 @pytest.mark.skipif(

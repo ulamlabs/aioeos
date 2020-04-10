@@ -1,6 +1,17 @@
 Changelog
 =========
 
+1.0.2 (10.04.2020)
+------------------
+
+- Tested library against RPC node,
+- EosAccount API,
+- Support using EOS ABI objects as action payloads,
+- Signing support in RPC client,
+- Cached chain ID,
+- Simplified Getting Started guide,
+- EOSKey renamed to EosKey
+
 1.0.1 (03.04.2020)
 ------------------
 

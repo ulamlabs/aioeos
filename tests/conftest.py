@@ -2,10 +2,8 @@ import random
 
 import pytest
 
-from aioeos.account import EOSAccount
+from aioeos import EosAccount, EosJsonRpc, EosTransaction, EosAuthority
 from aioeos.contracts import eosio
-from aioeos.rpc import EosJsonRpc
-from aioeos.types import EosAuthority, EosTransaction
 
 
 @pytest.fixture
@@ -15,7 +13,7 @@ def rpc():
 
 @pytest.fixture
 def main_account():
-    return EOSAccount(
+    return EosAccount(
         name='eostest12345',
         private_key='5JeaxignXEg3mGwvgmwxG6w6wHcRp9ooPw81KjrP2ah6TWSECDN'
     )
@@ -27,7 +25,7 @@ async def second_account(loop, main_account, rpc):
         random.choice('12345abcdefghijklmnopqrstuvwxyz')
         for i in range(12)
     )
-    account = EOSAccount(name=name)
+    account = EosAccount(name=name)
     block = await rpc.get_head_block()
 
     owner = EosAuthority(

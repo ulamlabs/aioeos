@@ -7,8 +7,8 @@ from aioresponses import aioresponses
 import pytest
 from yarl import URL
 
-from aioeos import exceptions
-from aioeos.types import BaseAbiObject, EosAction, EosTransaction, UInt8
+from aioeos import exceptions, EosAction, EosTransaction
+from aioeos.types import BaseAbiObject, UInt8
 
 
 @pytest.fixture

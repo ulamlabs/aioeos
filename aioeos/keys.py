@@ -8,14 +8,14 @@ import ecdsa
 from aioeos.types import EosKeyWeight
 
 
-class EOSKey:
+class EosKey:
     """
-    EOSKey instance.
+    EosKey instance.
 
     Depends on which kwargs are given, this works in a different way:
     - No kwargs - generates a new private key
     - Only private_key - public key is being derived from private key
-    - Only public_key - EOSKey instance has no private key
+    - Only public_key - EosKey instance has no private key
     """
 
     def __init__(self, *, private_key: str = None, public_key: str = None):
@@ -230,5 +230,5 @@ class EOSKey:
         return EosKeyWeight(key=self.to_public(), weight=weight)
 
     def __eq__(self, other) -> bool:
-        assert isinstance(other, EOSKey), 'Can compare only to EOSKey instance'
+        assert isinstance(other, EosKey), 'Can compare only to EosKey instance'
         return self.to_public() == other.to_public()

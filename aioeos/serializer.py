@@ -213,11 +213,12 @@ class AbiObjectSerializer(BaseSerializer):
 class AbiActionPayloadSerializer(BaseSerializer):
     def serialize(self, value: types.AbiActionPayload) -> bytes:
         assert not isinstance(value, dict), 'Convert data to ABI format first'
-
-        if isinstance(value, bytes):
-            return AbiBytesSerializer().serialize(value)
-
-        return AbiObjectSerializer(type(value)).serialize(value)
+        if types.is_abi_object(type(value)):
+            # mypy won't recognize that as a type check apparently
+            serializer = AbiObjectSerializer(type(value))
+            value = serializer.serialize(value)  # type: ignore
+        assert isinstance(value, bytes)
+        return AbiBytesSerializer().serialize(value)
 
     def deserialize(self, value: bytes) -> Tuple[int, bytes]:
         # TODO: figure out how to convert it back to BaseAbiObject or dict
@@ -283,12 +284,11 @@ class AbiListSerializer(BaseSerializer):
 
 
 def get_abi_type_serializer(abi_type: Type) -> BaseSerializer:
-    is_class = inspect.isclass(abi_type)
     if abi_type in TYPE_MAPPING:
         return TYPE_MAPPING[abi_type]
     elif getattr(abi_type, '_name', None) == 'List':
         return AbiListSerializer(abi_type)
-    elif is_class and issubclass(abi_type, types.BaseAbiObject):
+    elif types.is_abi_object(abi_type):
         return AbiObjectSerializer(abi_type)
 
     # if type is not supported, raise an Exception

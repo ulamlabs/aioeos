@@ -1,15 +1,14 @@
 import asyncio
+import binascii
+from dataclasses import dataclass
+from datetime import datetime
 
 from aioresponses import aioresponses
 import pytest
+from yarl import URL
 
 from aioeos import exceptions
-from aioeos.rpc import EosJsonRpc
-
-
-@pytest.fixture
-def rpc():
-    return EosJsonRpc('http://mock.rpc.url')
+from aioeos.types import BaseAbiObject, EosAction, EosTransaction, UInt8
 
 
 @pytest.fixture
@@ -134,6 +133,22 @@ async def test_get_currency_stats(rpc, mock_post):
 async def test_get_info(rpc, mock_post):
     await rpc.get_info()
     mock_post.assert_called_with('/chain/get_info')
+
+
+async def test_get_chain_id(rpc, ar):
+    mock_url = f'{rpc.URL}/v1/chain/get_info'
+    hex_chain_id = (
+        '7479dd536fa543a6e5faafe8f90132f8d1aab58c746d7d7a4e01c10ea091e25a'
+    )
+    expected_chain_id = binascii.unhexlify(hex_chain_id)
+    ar.post(mock_url, payload={'chain_id': hex_chain_id})
+
+    assert await rpc.get_chain_id() == expected_chain_id
+    assert len(ar._responses) == 1
+
+    # make sure it's cached
+    assert await rpc.get_chain_id() == expected_chain_id
+    assert len(ar._responses) == 1
 
 
 async def test_get_producer_schedule(rpc, mock_post):
@@ -275,3 +290,125 @@ async def test_get_controlled_accounts(rpc, mock_post):
     mock_post.assert_called_with(
         '/history/get_controlled_accounts', {'controlling_account': 'eosio'}
     )
+
+
+async def test_get_head_block(rpc, ar):
+    expected_head_block = {
+        'block_num': 3,
+        'ref_block_prefix': 4
+    }
+    ar.post(f'{rpc.URL}/v1/chain/get_info', payload={'head_block_num': 3})
+    ar.post(f'{rpc.URL}/v1/chain/get_block', payload=expected_head_block)
+
+    assert await rpc.get_head_block() == expected_head_block
+
+
+@pytest.fixture
+def expected_signed_transaction():
+    return {
+        'compression': 0,
+        'packed_context_free_data': '',
+        'packed_trx': (
+            'a8aaca5d03000400000000000000011032561960aaa833000000000090b1ca015'
+            '0c810216395315500000000a8ed3232010300'
+        ),
+        'signatures': [
+            'SIG_K1_Kh65eZiWa3DCMT5UjnZf9tNtG8P4DBgULd1Tq15Hg37LfDTn8jtW6e7Yt'
+            'dB3EuANcCC64s445URAkRt27rjWr8WYqZweLH'
+        ]
+    }
+
+
+async def test_sign_and_push_transaction_dict_payload(
+    rpc, ar, main_account, expected_signed_transaction
+):
+    ar.post(
+        f'{rpc.URL}/v1/chain/get_info',
+        payload={'chain_id': '00aabbbccc'}
+    )
+    ar.post(f'{rpc.URL}/v1/chain/abi_json_to_bin', payload={'binargs': '03'})
+    ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
+
+    action = EosAction(
+        account='aioeos.test1',
+        name='test',
+        authorization=[main_account.authorization('active')],
+        data={'a': 3}
+    )
+    transaction = EosTransaction(
+        expiration=datetime.fromisoformat('2019-11-12T12:50:48.000+00:00'),
+        ref_block_num=3,
+        ref_block_prefix=4,
+        actions=[action]
+    )
+
+    await rpc.sign_and_push_transaction(transaction, keys=[main_account.key])
+    assert len(ar._responses) == 3
+    push_request = ar.requests[
+        ('POST', URL('http://127.0.0.1:8888/v1/chain/push_transaction'))
+    ][0]
+    assert push_request.kwargs['json'] == expected_signed_transaction
+
+
+async def test_sign_and_push_transaction_bytes_payload(
+    rpc, ar, main_account, expected_signed_transaction
+):
+    ar.post(
+        f'{rpc.URL}/v1/chain/get_info',
+        payload={'chain_id': '00aabbbccc'}
+    )
+    ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
+
+    action = EosAction(
+        account='aioeos.test1',
+        name='test',
+        authorization=[main_account.authorization('active')],
+        data=b'\x03'
+    )
+    transaction = EosTransaction(
+        expiration=datetime.fromisoformat('2019-11-12T12:50:48.000+00:00'),
+        ref_block_num=3,
+        ref_block_prefix=4,
+        actions=[action]
+    )
+
+    await rpc.sign_and_push_transaction(transaction, keys=[main_account.key])
+    assert len(ar._responses) == 2
+    push_request = ar.requests[
+        ('POST', URL('http://127.0.0.1:8888/v1/chain/push_transaction'))
+    ][0]
+    assert push_request.kwargs['json'] == expected_signed_transaction
+
+
+async def test_sign_and_push_transaction_abi_payload(
+    rpc, ar, main_account, expected_signed_transaction
+):
+    @dataclass
+    class Payload(BaseAbiObject):
+        a: UInt8
+
+    ar.post(
+        f'{rpc.URL}/v1/chain/get_info',
+        payload={'chain_id': '00aabbbccc'}
+    )
+    ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
+
+    action = EosAction(
+        account='aioeos.test1',
+        name='test',
+        authorization=[main_account.authorization('active')],
+        data=Payload(a=3)
+    )
+    transaction = EosTransaction(
+        expiration=datetime.fromisoformat('2019-11-12T12:50:48.000+00:00'),
+        ref_block_num=3,
+        ref_block_prefix=4,
+        actions=[action]
+    )
+
+    await rpc.sign_and_push_transaction(transaction, keys=[main_account.key])
+    assert len(ar._responses) == 2
+    push_request = ar.requests[
+        ('POST', URL('http://127.0.0.1:8888/v1/chain/push_transaction'))
+    ][0]
+    assert push_request.kwargs['json'] == expected_signed_transaction

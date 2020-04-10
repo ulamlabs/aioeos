@@ -10,7 +10,7 @@ from aioeos.types import EosTransaction
     os.environ.get('DISABLE_RPC_TESTS'),
     reason='RPC tests are disabled'
 )
-async def test_tx_flow(rpc, main_account, second_account):
+async def test_sign_and_push_transaction(rpc, main_account, second_account):
     action = eosio_token.transfer(
         from_addr=main_account.name,
         to_addr=second_account.name,

@@ -2,13 +2,12 @@ import base64
 import binascii
 from dataclasses import asdict
 import hashlib
-import inspect
-from typing import Dict, List, Union
+from typing import Any, List
 
 from aiohttp import ClientSession
 from aioeos import exceptions, serializer
 from aioeos.keys import EOSKey
-from aioeos.types import BaseAbiObject, EosTransaction
+from aioeos.types import EosTransaction, is_abi_object
 
 
 ERROR_NAME_MAP = {
@@ -22,14 +21,13 @@ ERROR_NAME_MAP = {
 }
 
 
-def mixed_to_dict(payload: Union[Dict, BaseAbiObject]):
+def mixed_to_dict(payload: Any):
     """
-    Recursively converts payload with mixed BaseAbiObjects and dicts to dict
+    Recursively converts payload with mixed ABI objects and dicts to dict
     """
-    is_class = inspect.isclass(type(payload))
     if isinstance(payload, dict):
         return {k: mixed_to_dict(v) for k, v in payload.items()}
-    if is_class and issubclass(type(payload), BaseAbiObject):
+    if is_abi_object(type(payload)):
         return asdict(payload)
     return payload
 
@@ -211,7 +209,7 @@ class EosJsonRpc:
         keys: List[EOSKey] = []
     ):
         for action in transaction.actions:
-            if not isinstance(action.data, bytes):
+            if isinstance(action.data, dict):
                 abi_bin = await self.abi_json_to_bin(
                     action.account, action.name, action.data
                 )

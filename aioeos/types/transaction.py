@@ -25,14 +25,12 @@ class EosExtension(BaseAbiObject):
     data: AbiBytes
 
 
-def _default_expiration():
-    return datetime.now() + timedelta(seconds=120)
-
-
 @dataclass
 class EosTransaction(BaseAbiObject):
     # TAPOS fields
-    expiration: TimePointSec = field(default_factory=_default_expiration)
+    expiration: TimePointSec = field(
+        default_factory=lambda: datetime.now() + timedelta(seconds=120)
+    )
     ref_block_num: UInt16 = 0
     ref_block_prefix: UInt32 = 0
 

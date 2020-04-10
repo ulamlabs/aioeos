@@ -1,6 +1,7 @@
 from dataclasses import dataclass, fields
 from datetime import datetime
-from typing import ClassVar, Dict, NewType, TYPE_CHECKING
+import inspect
+from typing import Any, ClassVar, Dict, NewType, TYPE_CHECKING
 
 
 # EOS ABI types
@@ -52,3 +53,9 @@ class BaseAbiObject:
     @classmethod
     def _serializable_fields(cls):
         return (x.name for x in fields(cls))
+
+
+def is_abi_object(obj: Any) -> bool:
+    """Object is an ABI object if it's a subclass of BaseAbiObject"""
+    is_class = inspect.isclass(obj)
+    return is_class and issubclass(obj, BaseAbiObject)

@@ -35,3 +35,11 @@ def test_account_authorization():
     authorization = account.authorization('active')
     assert authorization.actor == account.name
     assert authorization.permission == 'active'
+
+
+def test_account_permission_level_weight():
+    account = EOSAccount(name='account')
+    authorization = account.authorization('active')
+    permission_level_weight = account.permission_level_weight('active', 3)
+    assert permission_level_weight.permission == authorization
+    assert permission_level_weight.weight == 3

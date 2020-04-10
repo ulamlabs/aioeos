@@ -48,12 +48,12 @@ def test_eosio_newaccount(main_account):
             account='eosio',
             name='newaccount',
             authorization=[],
-            data=eosio.NewAccountPayload(
-                creator=main_account.name,
-                name='eosio2',
-                owner=authority,
-                active=authority
-            )
+            data={
+                'creator': main_account.name,
+                'name': 'eosio2',
+                'owner': authority,
+                'active': authority
+            }
         )
     )
 

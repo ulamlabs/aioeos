@@ -15,7 +15,7 @@ Async Python library for interacting with EOS.io blockchain.
 ## Installation
 
 Library is available on PyPi, you can simply install it using `pip`.
-```
+```shell
 $ pip install aioeos
 ```
 
@@ -23,7 +23,7 @@ $ pip install aioeos
 
 ### Importing a private key
 
-```
+```python
 from aioeos import EosAccount
 
 account = EosAccount(private_key='your key')
@@ -31,7 +31,7 @@ account = EosAccount(private_key='your key')
 
 ### Transferring funds
 
-```
+```python
 from aioeos import EosJsonRpc, EosTransaction
 from aioeos.contracts import eosio_token
 
@@ -56,7 +56,7 @@ await rpc.sign_and_push_transaction(transaction, keys=[account.key])
 
 ### Creating a new account
 
-```
+```python
 from aioeos import EosJsonRpc, EosTransaction, EosAuthority
 from aioeos.contracts import eosio
 
@@ -102,6 +102,6 @@ Docs and usage examples are available [here](https://aioeos.readthedocs.io/en/la
 
 To run unit tests, you need to bootstrap an EOS testnet node first. Use the provided `ensure_eosio.sh` script.
 
-```
+```shell
 $ ./ensure_eosio.sh
 ```

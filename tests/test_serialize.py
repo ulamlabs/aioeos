@@ -83,6 +83,16 @@ def test_string_serializer():
     assert encoded != decoded
 
 
+def test_public_key_serializer(main_account):
+    s = serializer.PublicKeySerializer()
+    value = main_account.key.to_compressed()
+    encoded = s.serialize(value)
+    length, decoded = s.deserialize(encoded)
+    assert value == decoded
+    assert encoded != decoded
+    assert length == len(value)
+
+
 def test_abi_bytes_serializer():
     s = serializer.AbiBytesSerializer()
     value = b'\x00\x21\x37\x00'
@@ -262,11 +272,11 @@ def test_eos_transaction_serializer():
 
 
 def test_eos_abi_object_serializer():
+    AbiSerializer = serializer.AbiSerializer
     data = {'a': 3}
     payload = fake.Payload(**data)
 
-    assert serializer.load_abi_json(fake.account, fake.abi)
-    AbiSerializer = serializer.AbiSerializer
+    assert AbiSerializer.set_abi_from_json(fake.account, fake.abi)
 
     abi_type = AbiSerializer.get_type_for_action(fake.account, 'test')
     value = AbiSerializer.json_to_bin(fake.account, abi_type, data)

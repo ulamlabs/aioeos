@@ -135,8 +135,9 @@ class EosJsonRpc:
 
     async def load_abi(self, account_name: str) -> bool:
         response = await self.get_abi(account_name)
-        abi = response.get('abi', {})
-        return serializer.load_abi_json(account_name, abi)
+        return serializer.AbiSerializer.set_abi_from_json(
+            account_name, response.get('abi', {})
+        )
 
     async def get_table_rows(
         self, code, scope, table, table_key='', lower_bound='', upper_bound='',

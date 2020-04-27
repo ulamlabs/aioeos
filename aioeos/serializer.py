@@ -25,14 +25,6 @@ def mixed_to_dict(payload: Any):
     return payload
 
 
-def load_abi_json(contract, abi):
-    return AbiSerializer.set_abi_from_json(contract, abi)
-
-
-def load_abi_bin(contract, abi):
-    return AbiSerializer.set_abi_from_bin(contract, abi)
-
-
 class BaseSerializer(ABC):
     @abstractmethod
     def serialize(self, value: Any, context=None) -> bytes:
@@ -220,8 +212,7 @@ class PublicKeySerializer(BaseSerializer):
         return b''.join((b'\x00', serialized[1:]))
 
     def deserialize(self, value: bytes, context=None) -> Tuple[int, bytes]:
-        _, value = AbiBytesSerializer().deserialize(value)
-        return 33, value
+        return 33, value[1:34]
 
 
 class AbiObjectSerializer(BaseSerializer):
@@ -276,10 +267,12 @@ class AbiActionPayloadSerializer(BaseSerializer):
         length, binary = AbiBytesSerializer().deserialize(value)
 
         try:
-            decoded = AbiSerializer.bin_to_json(
-                context.get('account', ''), context.get('name', ''), binary
+            return (
+                length,
+                AbiSerializer.bin_to_json(
+                    context.get('account', ''), context.get('name', ''), binary
+                )
             )
-            return length, decoded
         except EosAbiSerializerException:
             # TODO: use our custom types somehow
             return length, binary

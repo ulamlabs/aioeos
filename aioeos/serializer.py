@@ -1,20 +1,38 @@
 from abc import ABC, abstractmethod
+from dataclasses import asdict
 from datetime import datetime, timezone
 import inspect
 import struct
-from typing import Any, List, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
+
+from abieos import EosAbiSerializer, EosAbiSerializerException
 
 from aioeos import types, exceptions
 
 
+global AbiSerializer
+AbiSerializer = EosAbiSerializer()
+
+
+def mixed_to_dict(payload: Any):
+    """
+    Recursively converts payload with mixed ABI objects and dicts to dict
+    """
+    if isinstance(payload, dict):
+        return {k: mixed_to_dict(v) for k, v in payload.items()}
+    if types.is_abi_object(type(payload)):
+        return asdict(payload)
+    return payload
+
+
 class BaseSerializer(ABC):
     @abstractmethod
-    def serialize(self, value: Any) -> bytes:
+    def serialize(self, value: Any, context=None) -> bytes:
         """Returns byte-encoded value"""
         pass  # pragma: no cover
 
     @abstractmethod
-    def deserialize(self, value: bytes) -> Tuple[int, Any]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, Any]:
         """
         Returns a tuple containing length of original data and deserialized
         value
@@ -34,10 +52,10 @@ class BasicTypeSerializer(BaseSerializer):
         assert fmt, 'provide valid fmt value'
         self.fmt = fmt
 
-    def serialize(self, value: Any) -> bytes:
+    def serialize(self, value: Any, context=None) -> bytes:
         return struct.pack(self.fmt, value)
 
-    def deserialize(self, value: bytes) -> Tuple[int, Any]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, Any]:
         length = struct.calcsize(self.fmt)
         values = struct.unpack_from(self.fmt, value)
         return length, values[0]
@@ -53,7 +71,7 @@ class AbiNameSerializer(BasicTypeSerializer):
         self.alphabet = '.12345abcdefghijklmnopqrstuvwxyz'
         self.fmt = 'Q'
 
-    def serialize(self, value: str) -> bytes:
+    def serialize(self, value: str, context=None) -> bytes:
         # Run preliminary checks
         if len(value) > 13:
             raise exceptions.EosSerializerAbiNameTooLongException
@@ -69,7 +87,7 @@ class AbiNameSerializer(BasicTypeSerializer):
             name |= self.alphabet.index(value[12]) & 0x0F
         return super().serialize(name)
 
-    def deserialize(self, value: bytes) -> Tuple[int, str]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, str]:
         length, decoded_value = super().deserialize(value)
         name = ['.'] * 13
         i = 12
@@ -88,7 +106,7 @@ class VarUIntSerializer(BaseSerializer):
     how many bytes are required to encode given integer.
     """
 
-    def serialize(self, value: int) -> bytes:
+    def serialize(self, value: int, context=None) -> bytes:
         # TODO: copied over from libeospy, I'm 99% sure this is overcomplicated
         array = bytearray()
         val = int(value)
@@ -103,7 +121,7 @@ class VarUIntSerializer(BaseSerializer):
             array.append(int(buf))
         return bytes(array)
 
-    def deserialize(self, value: bytes) -> Tuple[int, int]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, int]:
         # TODO: copied over from libeospy, I'm 99% sure this is overcomplicated
         shift = 0
         result = 0
@@ -124,12 +142,12 @@ class AbiBytesSerializer(BaseSerializer):
     prefixed with payload size encoded as VarUInt.
     """
 
-    def serialize(self, value: bytes) -> bytes:
+    def serialize(self, value: bytes, context=None) -> bytes:
         assert isinstance(value, bytes), 'Provide binary format'
         prefix = VarUIntSerializer().serialize(len(value))
         return b''.join((prefix, value))
 
-    def deserialize(self, value: bytes) -> Tuple[int, bytes]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, bytes]:
         prefix_length, prefix = VarUIntSerializer().deserialize(value)
         overall_length = prefix_length + prefix
         return overall_length, value[prefix_length:overall_length]
@@ -144,10 +162,10 @@ class AbiTimePointSerializer(BasicTypeSerializer):
     def __init__(self):
         self.fmt = 'Q'
 
-    def serialize(self, value: datetime) -> bytes:
+    def serialize(self, value: datetime, context=None) -> bytes:
         return super().serialize(int(value.timestamp() * 1000))
 
-    def deserialize(self, value: bytes) -> Tuple[int, datetime]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, datetime]:
         length, decoded_value = super().deserialize(value)
         return (
             length, datetime.fromtimestamp(decoded_value / 1000, timezone.utc)
@@ -162,10 +180,10 @@ class AbiTimePointSecSerializer(BasicTypeSerializer):
     def __init__(self):
         self.fmt = 'I'
 
-    def serialize(self, value: datetime) -> bytes:
+    def serialize(self, value: datetime, context=None) -> bytes:
         return super().serialize(int(value.timestamp()))
 
-    def deserialize(self, value: bytes) -> Tuple[int, datetime]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, datetime]:
         length, decoded_value = super().deserialize(value)
         return length, datetime.fromtimestamp(decoded_value, timezone.utc)
 
@@ -176,43 +194,68 @@ class AbiStringSerializer(BaseSerializer):
     prefixed with length but it's comprised of ASCII codes for each character
     packed in binary format.
     """
-    def serialize(self, value: str) -> bytes:
-        return AbiBytesSerializer().serialize(value.encode())
+    def serialize(self, value: str, context=None) -> bytes:
+        return AbiBytesSerializer().serialize(value.encode(), context)
 
-    def deserialize(self, value: bytes) -> Tuple[int, str]:
-        length, value = AbiBytesSerializer().deserialize(value)
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, str]:
+        length, value = AbiBytesSerializer().deserialize(value, context)
         return length, value.decode()
+
+
+class PublicKeySerializer(BaseSerializer):
+    """
+    Serializer for ABI Public Key type. This is a really weird type, since it's
+    basically bytes, but it's prefixed by 0 instead of length
+    """
+    def serialize(self, value: bytes, context=None) -> bytes:
+        serialized = AbiBytesSerializer().serialize(value)
+        return b''.join((b'\x00', serialized[1:]))
+
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, bytes]:
+        return 33, value[1:34]
 
 
 class AbiObjectSerializer(BaseSerializer):
     def __init__(self, abi_class: Type):
         self.abi_class = abi_class
 
-    def serialize(self, value: types.BaseAbiObject) -> bytes:
+    def serialize(self, value: types.BaseAbiObject, context=None) -> bytes:
         assert issubclass(value.__class__, self.abi_class)
         return b''.join(
             serialize(
                 getattr(value, field),
                 value.__dataclass_fields__[field].type,
+                context=value
             )
             for field in value._serializable_fields()
         )
 
-    def deserialize(self, value: bytes) -> Tuple[int, types.BaseAbiObject]:
+    def deserialize(
+        self, value: bytes, context=None
+    ) -> Tuple[int, types.BaseAbiObject]:
         cursor = 0
-        values = {}
+        values: Dict = {}
         for field in self.abi_class._serializable_fields():
             length, values[field] = deserialize(
                 value[cursor:],
-                self.abi_class.__dataclass_fields__[field].type
+                self.abi_class.__dataclass_fields__[field].type,
+                context=values
             )
             cursor += length
         return cursor, self.abi_class(**values)
 
 
 class AbiActionPayloadSerializer(BaseSerializer):
-    def serialize(self, value: types.AbiActionPayload) -> bytes:
-        assert not isinstance(value, dict), 'Convert data to ABI format first'
+    def serialize(self, value: types.AbiActionPayload, context=None) -> bytes:
+        if isinstance(value, dict):
+            # attempt to serialize it using abieos
+            abi_type = AbiSerializer.get_type_for_action(
+                context.account, context.name
+            )
+            value = AbiSerializer.json_to_bin(
+                context.account, abi_type, mixed_to_dict(value)
+            )
+
         if types.is_abi_object(type(value)):
             # mypy won't recognize that as a type check apparently
             serializer = AbiObjectSerializer(type(value))
@@ -220,9 +263,19 @@ class AbiActionPayloadSerializer(BaseSerializer):
         assert isinstance(value, bytes)
         return AbiBytesSerializer().serialize(value)
 
-    def deserialize(self, value: bytes) -> Tuple[int, bytes]:
-        # TODO: figure out how to convert it back to BaseAbiObject or dict
-        return AbiBytesSerializer().deserialize(value)
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, bytes]:
+        length, binary = AbiBytesSerializer().deserialize(value)
+
+        try:
+            return (
+                length,
+                AbiSerializer.bin_to_json(
+                    context.get('account', ''), context.get('name', ''), binary
+                )
+            )
+        except EosAbiSerializerException:
+            # TODO: use our custom types somehow
+            return length, binary
 
 
 TYPE_MAPPING = {
@@ -239,6 +292,7 @@ TYPE_MAPPING = {
     types.Name: AbiNameSerializer(),
     types.VarUInt: VarUIntSerializer(),
     types.AbiBytes: AbiBytesSerializer(),
+    types.PublicKey: PublicKeySerializer(),
     types.AbiActionPayload: AbiActionPayloadSerializer(),  # type: ignore
     types.TimePoint: AbiTimePointSerializer(),
     types.TimePointSec: AbiTimePointSecSerializer(),
@@ -256,13 +310,16 @@ class AbiListSerializer(BaseSerializer):
         self.eos_type = list_type.__args__[0]
         self.item_serializer = get_abi_type_serializer(self.eos_type)
 
-    def serialize(self, value: List[Any]) -> bytes:
+    def serialize(self, value: List[Any], context=None) -> bytes:
         return b''.join([
             VarUIntSerializer().serialize(len(value)),
-            *(self.item_serializer.serialize(x) for x in value)
+            *(
+                self.item_serializer.serialize(x, context=context)
+                for x in value
+            )
         ])
 
-    def deserialize(self, value: bytes) -> Tuple[int, List[Any]]:
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, List[Any]]:
         # List always starts with a VarUInt representing item count
         prefix_length, count = VarUIntSerializer().deserialize(value)
 
@@ -272,7 +329,9 @@ class AbiListSerializer(BaseSerializer):
 
         for _ in range(count):
             # try to decode bytes as expected EOS type
-            length, decoded_value = self.item_serializer.deserialize(abi_bytes)
+            length, decoded_value = self.item_serializer.deserialize(
+                abi_bytes, context=context
+            )
 
             # advance buffer by read and decoded bytes
             overall_length += length
@@ -295,14 +354,18 @@ def get_abi_type_serializer(abi_type: Type) -> BaseSerializer:
     raise exceptions.EosSerializerUnsupportedTypeException(abi_type)
 
 
-def serialize(value: Any, abi_type: Type = None) -> bytes:
+def serialize(value: Any, abi_type: Type = None, context=None) -> bytes:
     """Serializes ABI values to binary format"""
     if not abi_type:
         is_class = inspect.isclass(value)
         abi_type = value.__class__ if is_class else type(value)
-    return get_abi_type_serializer(abi_type).serialize(value)
+    return get_abi_type_serializer(abi_type).serialize(value, context=context)
 
 
-def deserialize(value: bytes, abi_class: Type) -> Tuple[int, Any]:
+def deserialize(
+    value: bytes, abi_class: Type, context=None
+) -> Tuple[int, Any]:
     """Deserializes ABI values from binary format"""
-    return get_abi_type_serializer(abi_class).deserialize(value)
+    return (
+        get_abi_type_serializer(abi_class).deserialize(value, context=context)
+    )

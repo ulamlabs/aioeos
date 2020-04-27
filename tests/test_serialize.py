@@ -4,6 +4,8 @@ import pytest
 
 from aioeos import serializer, types, exceptions
 
+from tests.contracts import fake
+
 
 def test_unsupported_type_exception():
     with pytest.raises(exceptions.EosSerializerUnsupportedTypeException):
@@ -79,6 +81,16 @@ def test_string_serializer():
     _, decoded = s.deserialize(encoded)
     assert value == decoded
     assert encoded != decoded
+
+
+def test_public_key_serializer(main_account):
+    s = serializer.PublicKeySerializer()
+    value = main_account.key.to_compressed()
+    encoded = s.serialize(value)
+    length, decoded = s.deserialize(encoded)
+    assert value == decoded
+    assert encoded != decoded
+    assert length == len(value)
 
 
 def test_abi_bytes_serializer():
@@ -257,3 +269,15 @@ def test_eos_transaction_serializer():
     length, decoded = serializer.deserialize(encoded, types.EosTransaction)
     assert decoded == transaction
     assert len(encoded) == length
+
+
+def test_eos_abi_object_serializer():
+    AbiSerializer = serializer.AbiSerializer
+    data = {'a': 3}
+    payload = fake.Payload(**data)
+
+    assert AbiSerializer.set_abi_from_json(fake.account, fake.abi)
+
+    abi_type = AbiSerializer.get_type_for_action(fake.account, 'test')
+    value = AbiSerializer.json_to_bin(fake.account, abi_type, data)
+    assert serializer.serialize(payload) == value

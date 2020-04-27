@@ -7,7 +7,7 @@ from typing import Any, ClassVar, Dict, NewType, TYPE_CHECKING
 # EOS ABI types
 # TODO: implement bool, uint128, int128, float128, block_timestamp_type,
 # symbol, symbol_code, asset, checksum160, checksum256, checksum512,
-# public_key, private_key, signature, extended_asset
+# signature, extended_asset
 if TYPE_CHECKING:
     UInt8 = int
     UInt16 = int
@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     TimePoint = datetime
     Name = str
     AbiBytes = bytes
+    PublicKey = bytes
+    PrivateKey = bytes
 else:
     # Our runtime logic depends on these being new types, but this makes mypy
     # require explicit casting
@@ -41,6 +43,8 @@ else:
     TimePointSec = NewType('TimePointSec', datetime)
     TimePoint = NewType('TimePoint', datetime)
     AbiBytes = NewType('AbiBytes', bytes)
+    PublicKey = NewType('PublicKey', bytes)
+    PrivateKey = NewType('PrivateKey', bytes)
 
     # this type is weird because it's like int, but it has no fixed size
     VarUInt = NewType('VarUInt', int)

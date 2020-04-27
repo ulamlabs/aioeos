@@ -1,6 +1,7 @@
 aiohttp==3.3.1
 base58==2.0.0
 ecdsa==0.13.3
+abieos-python==1.0.0
 
 # docs requirements
 sphinx==2.4.4

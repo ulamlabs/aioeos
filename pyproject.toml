@@ -15,6 +15,7 @@ python = "^3.7"
 aiohttp = "^3.3.1"
 base58 = "2.0.0"
 ecdsa = "^0.15"
+abieos-python = "1.0.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7.9"

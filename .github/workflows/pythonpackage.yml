@@ -33,7 +33,7 @@ jobs:
         poetry run flake8
     - name: Lint with mypy
       run: |
-        poetry run mypy aioeos
+        poetry run mypy
     - name: Test with pytest
       env:
         # eosio node won't bootstrap on Github Actions

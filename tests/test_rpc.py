@@ -1,6 +1,5 @@
 import asyncio
 import binascii
-from dataclasses import dataclass
 from datetime import datetime
 
 from aioresponses import aioresponses
@@ -8,7 +7,8 @@ import pytest
 from yarl import URL
 
 from aioeos import exceptions, EosAction, EosTransaction
-from aioeos.types import BaseAbiObject, UInt8
+
+from tests.contracts import fake
 
 
 @pytest.fixture
@@ -58,18 +58,6 @@ async def test_error_mapping(rpc, ar):
     }
     ar.post(mock_url, payload=payload)
     assert await rpc.post('/mock') == payload
-
-
-async def test_abi_json_to_bin(rpc, mock_post):
-    await rpc.abi_json_to_bin('eosio.token', 'send', {})
-    mock_post.assert_called_with(
-        '/chain/abi_json_to_bin',
-        {
-            'code': 'eosio.token',
-            'action': 'send',
-            'args': {}
-        }
-    )
 
 
 async def test_get_abi(rpc, mock_post):
@@ -183,12 +171,9 @@ async def test_get_raw_abi(rpc, mock_post):
     mock_post.side_effect = asyncio.coroutine(lambda *args, **kwargs: response)
     raw_abi = await rpc.get_raw_abi('eosio')
     mock_post.assert_called_with(
-        '/chain/get_raw_code_and_abi', {'account_name': 'eosio'}
+        '/chain/get_raw_abi', {'account_name': 'eosio'}
     )
-    assert raw_abi == {
-        'account_name': 'eosio',
-        'abi': 'test'.encode()
-    }
+    assert raw_abi == response
 
 
 async def test_get_table_rows(rpc, mock_post):
@@ -309,12 +294,12 @@ def expected_signed_transaction():
         'compression': 0,
         'packed_context_free_data': '',
         'packed_trx': (
-            'a8aaca5d03000400000000000000011032561960aaa833000000000090b1ca015'
+            'a8aaca5d03000400000000000000010080826601ea3055000000000090b1ca015'
             '0c810216395315500000000a8ed3232010300'
         ),
         'signatures': [
-            'SIG_K1_Kh65eZiWa3DCMT5UjnZf9tNtG8P4DBgULd1Tq15Hg37LfDTn8jtW6e7Yt'
-            'dB3EuANcCC64s445URAkRt27rjWr8WYqZweLH'
+            'SIG_K1_Kaixg785aWfj5eVF7YPzHbjxZXPTwEHp9iDiedAZxMJynGQ8fEL2UMfEKD'
+            'M461uczELPxb265cy4uTipfgoFLFnPQ8STD9'
         ]
     }
 
@@ -322,15 +307,12 @@ def expected_signed_transaction():
 async def test_sign_and_push_transaction_dict_payload(
     rpc, ar, main_account, expected_signed_transaction
 ):
-    ar.post(
-        f'{rpc.URL}/v1/chain/get_info',
-        payload={'chain_id': '00aabbbccc'}
-    )
-    ar.post(f'{rpc.URL}/v1/chain/abi_json_to_bin', payload={'binargs': '03'})
+    ar.post(f'{rpc.URL}/v1/chain/get_info', payload={'chain_id': '00aabbbccc'})
+    ar.post(f'{rpc.URL}/v1/chain/get_abi', payload={'abi': fake.abi})
     ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
 
     action = EosAction(
-        account='aioeos.test1',
+        account='eosio.fake',
         name='test',
         authorization=[main_account.authorization('active')],
         data={'a': 3}
@@ -360,7 +342,7 @@ async def test_sign_and_push_transaction_bytes_payload(
     ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
 
     action = EosAction(
-        account='aioeos.test1',
+        account='eosio.fake',
         name='test',
         authorization=[main_account.authorization('active')],
         data=b'\x03'
@@ -383,27 +365,19 @@ async def test_sign_and_push_transaction_bytes_payload(
 async def test_sign_and_push_transaction_abi_payload(
     rpc, ar, main_account, expected_signed_transaction
 ):
-    @dataclass
-    class Payload(BaseAbiObject):
-        a: UInt8
-
     ar.post(
         f'{rpc.URL}/v1/chain/get_info',
         payload={'chain_id': '00aabbbccc'}
     )
     ar.post(f'{rpc.URL}/v1/chain/push_transaction', payload={'code': 200})
 
-    action = EosAction(
-        account='aioeos.test1',
-        name='test',
-        authorization=[main_account.authorization('active')],
-        data=Payload(a=3)
-    )
     transaction = EosTransaction(
         expiration=datetime.fromisoformat('2019-11-12T12:50:48.000+00:00'),
         ref_block_num=3,
         ref_block_prefix=4,
-        actions=[action]
+        actions=[
+            fake.test(3, authorization=[main_account.authorization('active')])
+        ]
     )
 
     await rpc.sign_and_push_transaction(transaction, keys=[main_account.key])

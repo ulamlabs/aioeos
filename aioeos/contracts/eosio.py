@@ -1,7 +1,16 @@
 """Helpers for creating actions on eosio contract"""
+from dataclasses import dataclass
 from typing import Optional
 
-from aioeos.types import EosAction, EosAuthority
+from aioeos.types import BaseAbiObject, EosAction, EosAuthority, Name
+
+
+@dataclass
+class EosNewAccount(BaseAbiObject):
+    creator: Name
+    name: Name
+    owner: EosAuthority
+    active: EosAuthority
 
 
 def newaccount(
@@ -16,12 +25,12 @@ def newaccount(
         account='eosio',
         name='newaccount',
         authorization=authorization,
-        data={
-            'creator': creator,
-            'name': account_name,
-            'owner': owner,
-            'active': active if active else owner
-        }
+        data=EosNewAccount(
+            creator=creator,
+            name=account_name,
+            owner=owner,
+            active=active if active else owner
+        )
     )
 
 

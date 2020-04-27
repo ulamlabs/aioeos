@@ -143,10 +143,13 @@ class EosKey:
             if p.to_string() == self._vk.to_string():
                 return i
 
+    def to_compressed(self):
+        """Returns compressed public key"""
+        return self._vk.to_string(encoding='compressed')
+
     def to_public(self):
-        """Returns compressed, base58 encoded public key prefixed with EOS"""
-        compressed = self._vk.to_string(encoding='compressed')
-        return f'EOS{self._check_encode(compressed)}'
+        """Returns base58 encoded compressed public key prefixed with EOS"""
+        return f'EOS{self._check_encode(self.to_compressed())}'
 
     def to_wif(self):
         """Converts private key to legacy WIF format"""
@@ -220,7 +223,7 @@ class EosKey:
         return True
 
     def to_key_weight(self, weight: int) -> EosKeyWeight:
-        return EosKeyWeight(key=self.to_public(), weight=weight)
+        return EosKeyWeight(key=self.to_compressed(), weight=weight)
 
     def __eq__(self, other) -> bool:
         assert isinstance(other, EosKey), 'Can compare only to EosKey instance'

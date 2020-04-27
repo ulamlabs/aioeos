@@ -1,6 +1,7 @@
 from aioeos import EosAction
 from aioeos.types import EosAuthority
 from aioeos.contracts import eosio, eosio_token
+from aioeos.contracts.eosio import EosNewAccount
 
 
 def test_eosio_token_transfer():
@@ -49,12 +50,12 @@ def test_eosio_newaccount(main_account):
             account='eosio',
             name='newaccount',
             authorization=[],
-            data={
-                'creator': main_account.name,
-                'name': 'eosio2',
-                'owner': authority,
-                'active': authority
-            }
+            data=EosNewAccount(
+                creator=main_account.name,
+                name='eosio2',
+                owner=authority,
+                active=authority
+            )
         )
     )
 

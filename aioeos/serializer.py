@@ -3,14 +3,15 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 import inspect
 import struct
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Tuple, Type, Union
 
 from abieos import EosAbiSerializer, EosAbiSerializerException
 
 from aioeos import types, exceptions
 
 
-AbiSerializer = None  # type: Optional[EosAbiSerializer]
+global AbiSerializer
+AbiSerializer = EosAbiSerializer()
 
 
 def mixed_to_dict(payload: Any):
@@ -24,20 +25,11 @@ def mixed_to_dict(payload: Any):
     return payload
 
 
-def _ensure_abi_serializer():
-    global AbiSerializer
-    if not AbiSerializer:
-        AbiSerializer = EosAbiSerializer()
-    return AbiSerializer
-
-
 def load_abi_json(contract, abi):
-    _ensure_abi_serializer()
     return AbiSerializer.set_abi_from_json(contract, abi)
 
 
 def load_abi_bin(contract, abi):
-    _ensure_abi_serializer()
     return AbiSerializer.set_abi_from_bin(contract, abi)
 
 
@@ -210,11 +202,11 @@ class AbiStringSerializer(BaseSerializer):
     prefixed with length but it's comprised of ASCII codes for each character
     packed in binary format.
     """
-    def serialize(self, value: str) -> bytes:
-        return AbiBytesSerializer().serialize(value.encode())
+    def serialize(self, value: str, context=None) -> bytes:
+        return AbiBytesSerializer().serialize(value.encode(), context)
 
-    def deserialize(self, value: bytes) -> Tuple[int, str]:
-        length, value = AbiBytesSerializer().deserialize(value)
+    def deserialize(self, value: bytes, context=None) -> Tuple[int, str]:
+        length, value = AbiBytesSerializer().deserialize(value, context)
         return length, value.decode()
 
 
@@ -251,7 +243,7 @@ class AbiObjectSerializer(BaseSerializer):
         self, value: bytes, context=None
     ) -> Tuple[int, types.BaseAbiObject]:
         cursor = 0
-        values = {}
+        values: Dict = {}
         for field in self.abi_class._serializable_fields():
             length, values[field] = deserialize(
                 value[cursor:],
@@ -263,16 +255,9 @@ class AbiObjectSerializer(BaseSerializer):
 
 
 class AbiActionPayloadSerializer(BaseSerializer):
-    def _ensure_abi_serializer(self):
-        global AbiSerializer
-        if not AbiSerializer:
-            AbiSerializer = EosAbiSerializer()
-        return AbiSerializer
-
     def serialize(self, value: types.AbiActionPayload, context=None) -> bytes:
         if isinstance(value, dict):
             # attempt to serialize it using abieos
-            _ensure_abi_serializer()
             abi_type = AbiSerializer.get_type_for_action(
                 context.account, context.name
             )
@@ -288,7 +273,6 @@ class AbiActionPayloadSerializer(BaseSerializer):
         return AbiBytesSerializer().serialize(value)
 
     def deserialize(self, value: bytes, context=None) -> Tuple[int, bytes]:
-        _ensure_abi_serializer()
         length, binary = AbiBytesSerializer().deserialize(value)
 
         try:

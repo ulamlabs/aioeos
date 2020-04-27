@@ -1,6 +1,6 @@
 from .abi import (
     UInt8, UInt16, UInt32, UInt64, Int8, Int16, Int32, Int64, VarUInt, Float32,
-    Float64, TimePointSec, TimePoint, Name, AbiBytes, BaseAbiObject,
+    Float64, TimePointSec, TimePoint, Name, AbiBytes, PublicKey, BaseAbiObject,
     is_abi_object
 )  # noqa
 
@@ -18,7 +18,7 @@ __all__ = [
     # base ABI types
     'UInt8', 'UInt16', 'UInt32', 'UInt64', 'Int8', 'Int16', 'Int32', 'Int64',
     'VarUInt', 'Float32', 'Float64', 'TimePointSec', 'TimePoint', 'Name',
-    'AbiBytes', 'BaseAbiObject', 'is_abi_object',
+    'AbiBytes', 'PublicKey', 'BaseAbiObject', 'is_abi_object',
 
     # authority
     'EosPermissionLevel', 'EosKeyWeight', 'EosPermissionLevelWeight',

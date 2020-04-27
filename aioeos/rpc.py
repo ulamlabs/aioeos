@@ -1,13 +1,12 @@
-import base64
+import asyncio
 import binascii
-from dataclasses import asdict
 import hashlib
-from typing import Any, List
+from typing import List
 
 from aiohttp import ClientSession
 from aioeos import exceptions, serializer
 from aioeos.keys import EosKey
-from aioeos.types import EosTransaction, is_abi_object
+from aioeos.types import EosTransaction
 
 
 ERROR_NAME_MAP = {
@@ -19,17 +18,6 @@ ERROR_NAME_MAP = {
     'ram_usage_exceeded': exceptions.EosRamUsageExceededException,
     'eosio_assert_message_exception': exceptions.EosAssertMessageException,
 }
-
-
-def mixed_to_dict(payload: Any):
-    """
-    Recursively converts payload with mixed ABI objects and dicts to dict
-    """
-    if isinstance(payload, dict):
-        return {k: mixed_to_dict(v) for k, v in payload.items()}
-    if is_abi_object(type(payload)):
-        return asdict(payload)
-    return payload
 
 
 class EosJsonRpc:
@@ -53,15 +41,6 @@ class EosJsonRpc:
                         exceptions.EosRpcException
                     )(error)
                 return resp_dict
-
-    async def abi_json_to_bin(self, code, action, args):
-        return await self.post(
-            '/chain/abi_json_to_bin', {
-                'code': code,
-                'action': action,
-                'args': mixed_to_dict(args)
-            }
-        )
 
     async def get_abi(self, account_name: str):
         return await self.post(
@@ -148,15 +127,16 @@ class EosJsonRpc:
         )
 
     async def get_raw_abi(self, account_name: str):
-        response = await self.post(
-            '/chain/get_raw_code_and_abi', {
+        return await self.post(
+            '/chain/get_raw_abi', {
                 'account_name': account_name
             }
         )
-        return {
-            'account_name': response.get('account_name'),
-            'abi': base64.b64decode(response.get('abi'))
-        }
+
+    async def load_abi(self, account_name: str) -> bool:
+        response = await self.get_abi(account_name)
+        abi = response.get('abi', {})
+        return serializer.load_abi_json(account_name, abi)
 
     async def get_table_rows(
         self, code, scope, table, table_key='', lower_bound='', upper_bound='',
@@ -208,12 +188,12 @@ class EosJsonRpc:
         context_free_bytes: bytes = bytes(32),
         keys: List[EosKey] = []
     ):
-        for action in transaction.actions:
-            if isinstance(action.data, dict):
-                abi_bin = await self.abi_json_to_bin(
-                    action.account, action.name, action.data
-                )
-                action.data = binascii.unhexlify(abi_bin['binargs'])
+        contracts = {
+            action.account
+            for action in transaction.actions
+            if isinstance(action.data, dict)
+        }
+        await asyncio.gather(*(self.load_abi(c) for c in contracts))
 
         chain_id = await self.get_chain_id()
         serialized_transaction = serializer.serialize(transaction)

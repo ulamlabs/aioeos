@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List
 
-from .abi import AbiBytes, BaseAbiObject, UInt16, UInt32, Name
+from .abi import BaseAbiObject, UInt16, UInt32, Name, PublicKey
 
 
 @dataclass
@@ -12,7 +12,7 @@ class EosPermissionLevel(BaseAbiObject):
 
 @dataclass
 class EosKeyWeight(BaseAbiObject):
-    key: AbiBytes
+    key: PublicKey
     weight: UInt16
 
 

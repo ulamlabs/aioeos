@@ -13,7 +13,7 @@ keywords = ["blockchain", "eos", "async", "eosio", "cryptocurrency"]
 [tool.poetry.dependencies]
 python = "^3.7"
 aiohttp = "^3.3.1"
-base58 = "2.0.0"
+base58 = "2.0.1"
 ecdsa = "^0.15"
 
 [tool.poetry.dev-dependencies]

@@ -46,7 +46,7 @@ class EosJsonRpc:
                 resp_dict = await res.json(content_type=None)
 
                 # Who needs HTTP status codes, am I right? :D
-                if resp_dict.get('code') == 500:
+                if isinstance(resp_dict, dict) and resp_dict.get('code') == 500:
                     error = resp_dict.get('error', {})
                     raise ERROR_NAME_MAP.get(
                         error.get('name'),

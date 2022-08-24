@@ -1,6 +1,6 @@
 aiohttp==3.3.1
 base58==2.0.0
-ecdsa==0.13.3
+ecdsa==0.18.0
 
 # docs requirements
 sphinx==2.4.4
